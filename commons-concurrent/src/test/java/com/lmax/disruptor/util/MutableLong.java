@@ -19,45 +19,45 @@ package com.lmax.disruptor.util;
  * Holder class for a long value.
  */
 public class MutableLong {
-	private long value = 0L;
+    private long value = 0L;
 
-	/**
-	 * Default constructor
-	 */
-	public MutableLong() {
-	}
+    /**
+     * Default constructor
+     */
+    public MutableLong() {
+    }
 
-	/**
-	 * Construct the holder with initial value.
-	 *
-	 * @param initialValue to be initially set.
-	 */
-	public MutableLong(final long initialValue) {
-		this.value = initialValue;
-	}
+    /**
+     * Construct the holder with initial value.
+     *
+     * @param initialValue to be initially set.
+     */
+    public MutableLong(final long initialValue) {
+        this.value = initialValue;
+    }
 
-	/**
-	 * Get the long value.
-	 *
-	 * @return the long value.
-	 */
-	public long get() {
-		return value;
-	}
+    /**
+     * Get the long value.
+     *
+     * @return the long value.
+     */
+    public long get() {
+        return value;
+    }
 
-	/**
-	 * Set the long value.
-	 *
-	 * @param value to set.
-	 */
-	public void set(final long value) {
-		this.value = value;
-	}
+    /**
+     * Set the long value.
+     *
+     * @param value to set.
+     */
+    public void set(final long value) {
+        this.value = value;
+    }
 
-	/**
-	 * Increments the value
-	 */
-	public void increment() {
-		value++;
-	}
+    /**
+     * Increments the value
+     */
+    public void increment() {
+        value++;
+    }
 }

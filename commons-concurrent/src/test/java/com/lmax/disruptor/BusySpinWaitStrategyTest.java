@@ -15,14 +15,14 @@
  */
 package com.lmax.disruptor;
 
-import static com.lmax.disruptor.support.WaitStrategyTestUtil.assertWaitForWithDelayOf;
-
 import org.junit.Test;
+
+import static com.lmax.disruptor.support.WaitStrategyTestUtil.assertWaitForWithDelayOf;
 
 public class BusySpinWaitStrategyTest {
 
-	@Test
-	public void shouldWaitForValue() throws Exception {
-		assertWaitForWithDelayOf(50, new BusySpinWaitStrategy());
-	}
+    @Test
+    public void shouldWaitForValue() throws Exception {
+        assertWaitForWithDelayOf(50, new BusySpinWaitStrategy());
+    }
 }

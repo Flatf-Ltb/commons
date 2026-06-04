@@ -15,23 +15,23 @@
  */
 package com.lmax.disruptor;
 
+import com.lmax.disruptor.support.TestEvent;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.lmax.disruptor.support.TestEvent;
-
 public final class FatalExceptionHandlerTest {
-	@Test
-	public void shouldHandleFatalException() {
-		final Exception causeException = new Exception();
-		final TestEvent event = new TestEvent();
+    @Test
+    public void shouldHandleFatalException() {
 
-		ExceptionHandler<Object> exceptionHandler = new FatalExceptionHandler();
+        final Exception causeException = new Exception();
+        final TestEvent event = new TestEvent();
 
-		try {
-			exceptionHandler.handleEventException(causeException, 0L, event);
-		} catch (RuntimeException ex) {
-			Assert.assertEquals(causeException, ex.getCause());
-		}
-	}
+        ExceptionHandler<Object> exceptionHandler = new FatalExceptionHandler();
+
+        try {
+            exceptionHandler.handleEventException(causeException, 0L, event);
+        } catch (RuntimeException ex) {
+            Assert.assertEquals(causeException, ex.getCause());
+        }
+    }
 }

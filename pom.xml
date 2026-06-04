@@ -1,77 +1,137 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<!-- This is commons pom.xml -->
-	<groupId>io.mercury</groupId>
-	<artifactId>commons</artifactId>
-	<version>1.0-SNAPSHOT</version>
-	<packaging>pom</packaging>
+    <groupId>io.flatf</groupId>
+    <artifactId>commons</artifactId>
+    <version>1.0.1</version>
 
-	<name>commons</name>
-	<url>https://github.com/yellow013/commons.git</url>
+    <inceptionYear>2015</inceptionYear>
+    <url>https://github.com/Flatf-Ltb/commons.git</url>
+    <developers>
+        <developer>
+            <name>yellow013</name>
+        </developer>
+    </developers>
 
-	<modules>
-		<module>commons-core</module>
-		<module>commons-concurrent</module>
-		<module>commons-di</module>
-		<module>commons-graph</module>
-		<module>commons-jmh</module>
-	</modules>
+    <name>commons</name>
+    <packaging>pom</packaging>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<java.version>1.8</java.version>
-	</properties>
+    <modules>
+        <module>commons-concurrent</module>
+        <module>commons-core</module>
+        <module>commons-graph</module>
+        <module>commons-reflect</module>
+    </modules>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
-				<configuration>
-					<compilerArgument>-parameters</compilerArgument>
-					<source>${java.version}</source>
-					<target>${java.version}</target>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Java 21 -->
+        <java.version>21</java.version>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <!-- Common library version -->
+        <slf4j.version>2.0.17</slf4j.version>
+        <junit.version>4.13.2</junit.version>
+        <jupiter.version>6.0.3</jupiter.version>
+        <netty.version>4.2.12.Final</netty.version>
+        <jackson.version>2.21.2</jackson.version>
+        <guava.version>33.6.0-jre</guava.version>
+    </properties>
 
-	<dependencies>
-		<!-- Junit4 dependency -->
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.15.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
+                    <parameters>true</parameters>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <release>${java.version}</release>
+                    <fork>true</fork>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>io.mercury</groupId>
-				<artifactId>commons-core</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+    <dependencies>
+        <!-- JUnit is a unit testing framework to write and run repeatable automated tests on Java.
+            It provides a robust environment to write, organize,
+            and execute automated tests, ensuring code reliability and repeatability.
+            Its user-friendly annotations and assert methods facilitate the development and running of test cases,
+            making it a foundational tool for Java developers focusing on quality assurance and test-driven development. -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Module "junit-jupiter" of JUnit 5. -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Annotations the SpotBugs tool supports -->
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+        </dependency>
+    </dependencies>
 
-	<distributionManagement>
-		<repository>
-			<id>releases</id>
-			<name>releases</name>
-			<url>http://203.60.1.16:10000/nexus/repository/maven-releases/</url>
-		</repository>
-		<snapshotRepository>
-			<id>snapshots</id>
-			<name>snapshots</name>
-			<url>http://203.60.1.16:10000/nexus/repository/maven-snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
+    <dependencyManagement>
+        <dependencies>
+            <!-- JUnit 4 - classic -->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <!-- JUnit 5 - jupiter -->
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${jupiter.version}</version>
+            </dependency>
+            <!-- Annotations the SpotBugs tool supports -->
+            <dependency>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-annotations</artifactId>
+                <version>4.9.8</version>
+            </dependency>
+            <!-- A set of annotations used for code inspection support and code documentation. -->
+            <dependency>
+                <groupId>org.jetbrains</groupId>
+                <artifactId>annotations</artifactId>
+                <version>26.1.0</version>
+            </dependency>
+            <!-- Lombok is a Java library that provides annotations to simplify Java development
+                 by automating the generation of boilerplate code. -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>1.18.44</version>
+            </dependency>
+            <dependency>
+                <groupId>io.flatf</groupId>
+                <artifactId>commons-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
 </project>

@@ -7,27 +7,29 @@ import com.lmax.disruptor.util.DaemonThreadFactory;
 
 public class SequentialThreeConsumers {
 
-	private static class MyEvent {
-		private Object a;
-		private Object b;
-		private Object c;
-		@SuppressWarnings("unused")
-		private Object d;
-	}
+    private static class MyEvent {
+        private Object a;
+        private Object b;
+        private Object c;
+        @SuppressWarnings("unused")
+        private Object d;
+    }
 
-	private static EventFactory<MyEvent> factory = () -> new MyEvent();
+    private static final EventFactory<MyEvent> factory = MyEvent::new;
 
-	private static EventHandler<MyEvent> handler1 = (event, sequence, endOfBatch) -> event.b = event.a;
+    private static final EventHandler<MyEvent> handler1 = (event, sequence, endOfBatch) -> event.b = event.a;
 
-	private static EventHandler<MyEvent> handler2 = (event, sequence, endOfBatch) -> event.c = event.b;
+    private static final EventHandler<MyEvent> handler2 = (event, sequence, endOfBatch) -> event.c = event.b;
 
-	private static EventHandler<MyEvent> handler3 = (event, sequence, endOfBatch) -> event.d = event.c;
+    private static final EventHandler<MyEvent> handler3 = (event, sequence, endOfBatch) -> event.d = event.c;
 
-	public static void main(String[] args) {
-		Disruptor<MyEvent> disruptor = new Disruptor<MyEvent>(factory, 1024, DaemonThreadFactory.INSTANCE);
+    public static void main(String[] args) {
 
-		disruptor.handleEventsWith(handler1).then(handler2).then(handler3);
+        Disruptor<MyEvent> disruptor = new Disruptor<>(factory, 1024, DaemonThreadFactory.INSTANCE);
 
-		disruptor.start();
-	}
+        disruptor.handleEventsWith(handler1).then(handler2).then(handler3);
+
+        disruptor.start();
+
+    }
 }

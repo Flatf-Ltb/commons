@@ -9,67 +9,66 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class ThreeToOneDisruptor {
-	
-	public static class DataEvent {
-		
-		Object input;
-		Object[] output;
 
-		public DataEvent(int size) {
-			output = new Object[size];
-		}
+    public static class DataEvent {
 
-		public static final EventFactory<DataEvent> FACTORY = new EventFactory<DataEvent>() {
-			@Override
-			public DataEvent newInstance() {
-				return new DataEvent(3);
-			}
-		};
-	}
+        Object input;
+        Object[] output;
 
-	public static class TransformingHandler implements EventHandler<DataEvent> {
-		private final int outputIndex;
+        public DataEvent(int size) {
+            output = new Object[size];
+        }
 
-		public TransformingHandler(int outputIndex) {
-			this.outputIndex = outputIndex;
-		}
+        public static final EventFactory<DataEvent> FACTORY = () -> new DataEvent(3);
 
-		@Override
-		public void onEvent(DataEvent event, long sequence, boolean endOfBatch) throws Exception {
-			// Do Stuff.
-			event.output[outputIndex] = doSomething(event.input);
-		}
+    }
 
-		private Object doSomething(Object input) {
-			// Do required transformation here....
-			return input;
-		}
-	}
+    public static class TransformingHandler implements EventHandler<DataEvent> {
+        private final int outputIndex;
 
-	public static class CollatingHandler implements EventHandler<DataEvent> {
-		@Override
-		public void onEvent(DataEvent event, long sequence, boolean endOfBatch) throws Exception {
-			collate(event.output);
-		}
+        public TransformingHandler(int outputIndex) {
+            this.outputIndex = outputIndex;
+        }
 
-		private void collate(Object[] output) {
-			// Do required collation here....
-		}
-	}
+        @Override
+        public void onEvent(DataEvent event, long sequence, boolean endOfBatch) throws Exception {
+            // Do Stuff.
+            event.output[outputIndex] = doSomething(event.input);
+        }
 
-	public static void main(String[] args) {
-		@SuppressWarnings("unused")
-		Executor executor = Executors.newFixedThreadPool(4);
-		Disruptor<DataEvent> disruptor = new Disruptor<DataEvent>(DataEvent.FACTORY, 1024,
-				DaemonThreadFactory.INSTANCE);
+        private Object doSomething(Object input) {
+            // Do required transformation here....
+            return input;
+        }
+    }
 
-		TransformingHandler handler1 = new TransformingHandler(0);
-		TransformingHandler handler2 = new TransformingHandler(1);
-		TransformingHandler handler3 = new TransformingHandler(2);
-		CollatingHandler collator = new CollatingHandler();
+    public static class CollatingHandler implements EventHandler<DataEvent> {
 
-		disruptor.handleEventsWith(handler1, handler2, handler3).then(collator);
+        @Override
+        public void onEvent(DataEvent event, long sequence, boolean endOfBatch) throws Exception {
+            collate(event.output);
+        }
 
-		disruptor.start();
-	}
+        private void collate(Object[] output) {
+            // Do required collation here....
+        }
+    }
+
+    public static void main(String[] args) {
+
+        @SuppressWarnings("unused")
+        Executor executor = Executors.newFixedThreadPool(4);
+        Disruptor<DataEvent> disruptor = new Disruptor<>(DataEvent.FACTORY, 1024,
+                DaemonThreadFactory.INSTANCE);
+
+        TransformingHandler handler1 = new TransformingHandler(0);
+        TransformingHandler handler2 = new TransformingHandler(1);
+        TransformingHandler handler3 = new TransformingHandler(2);
+
+        CollatingHandler collator = new CollatingHandler();
+
+        disruptor.handleEventsWith(handler1, handler2, handler3).then(collator);
+        disruptor.start();
+
+    }
 }

@@ -19,29 +19,32 @@ import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.support.TestEvent;
 
 public class StubPublisher implements Runnable {
-	private volatile boolean running = true;
-	private volatile int publicationCount = 0;
 
-	private final RingBuffer<TestEvent> ringBuffer;
+    private volatile boolean running = true;
 
-	public StubPublisher(final RingBuffer<TestEvent> ringBuffer) {
-		this.ringBuffer = ringBuffer;
-	}
+    private volatile int publicationCount = 0;
 
-	public void run() {
-		while (running) {
-			final long sequence = ringBuffer.next();
-			// final TestEvent entry = ringBuffer.get(sequence);
-			ringBuffer.publish(sequence);
-			publicationCount++;
-		}
-	}
+    private final RingBuffer<TestEvent> ringBuffer;
 
-	public int getPublicationCount() {
-		return publicationCount;
-	}
+    public StubPublisher(final RingBuffer<TestEvent> ringBuffer) {
+        this.ringBuffer = ringBuffer;
+    }
 
-	public void halt() {
-		running = false;
-	}
+    public void run() {
+        while (running) {
+            final long sequence = ringBuffer.next();
+            // final TestEvent entry = ringBuffer.get(sequence);
+            ringBuffer.publish(sequence);
+            publicationCount++;
+        }
+    }
+
+    public int getPublicationCount() {
+        return publicationCount;
+    }
+
+    public void halt() {
+        running = false;
+    }
+
 }

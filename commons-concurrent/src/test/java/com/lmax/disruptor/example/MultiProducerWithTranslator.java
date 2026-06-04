@@ -10,81 +10,77 @@ import com.lmax.disruptor.dsl.ProducerType;
 import com.lmax.disruptor.util.DaemonThreadFactory;
 
 public class MultiProducerWithTranslator {
-	private static class IMessage {
-	}
 
-	private static class ITransportable {
-	}
+    private static class IMessage {
+    }
 
-	private static class ObjectBox {
+    private static class ITransportable {
+    }
 
-		@SuppressWarnings("unused")
-		IMessage message;
+    private static class ObjectBox {
 
-		@SuppressWarnings("unused")
-		ITransportable transportable;
+        @SuppressWarnings("unused")
+        IMessage message;
 
-		@SuppressWarnings("unused")
-		String string;
+        @SuppressWarnings("unused")
+        ITransportable transportable;
 
-		private static final EventFactory<ObjectBox> FACTORY = new EventFactory<ObjectBox>() {
-			@Override
-			public ObjectBox newInstance() {
-				return new ObjectBox();
-			}
-		};
+        @SuppressWarnings("unused")
+        String string;
 
-		public void setMessage(IMessage arg0) {
-			message = arg0;
-		}
+        private static final EventFactory<ObjectBox> FACTORY = ObjectBox::new;
 
-		public void setTransportable(ITransportable arg1) {
-			transportable = arg1;
-		}
+        public void setMessage(IMessage arg0) {
+            message = arg0;
+        }
 
-		public void setStreamName(String arg2) {
-			string = arg2;
-		}
-	}
+        public void setTransportable(ITransportable arg1) {
+            transportable = arg1;
+        }
 
-	public static class Publisher implements EventTranslatorThreeArg<ObjectBox, IMessage, ITransportable, String> {
-		@Override
-		public void translateTo(ObjectBox event, long sequence, IMessage arg0, ITransportable arg1, String arg2) {
-			event.setMessage(arg0);
-			event.setTransportable(arg1);
-			event.setStreamName(arg2);
-		}
-	}
+        public void setStreamName(String arg2) {
+            string = arg2;
+        }
+    }
 
-	public static class Consumer implements EventHandler<ObjectBox> {
-		@Override
-		public void onEvent(ObjectBox event, long sequence, boolean endOfBatch) throws Exception {
+    public static class Publisher implements EventTranslatorThreeArg<ObjectBox, IMessage, ITransportable, String> {
+        @Override
+        public void translateTo(ObjectBox event, long sequence, IMessage arg0, ITransportable arg1, String arg2) {
+            event.setMessage(arg0);
+            event.setTransportable(arg1);
+            event.setStreamName(arg2);
+        }
+    }
 
-		}
-	}
+    public static class Consumer implements EventHandler<ObjectBox> {
+        @Override
+        public void onEvent(ObjectBox event, long sequence, boolean endOfBatch) throws Exception {
 
-	static final int RING_SIZE = 1024;
+        }
+    }
 
-	public static void main(String[] args) throws InterruptedException {
-		Disruptor<ObjectBox> disruptor = new Disruptor<ObjectBox>(ObjectBox.FACTORY, RING_SIZE,
-				DaemonThreadFactory.INSTANCE, ProducerType.MULTI, new BlockingWaitStrategy());
-		disruptor.handleEventsWith(new Consumer()).then(new Consumer());
-		final RingBuffer<ObjectBox> ringBuffer = disruptor.getRingBuffer();
-		Publisher p = new Publisher();
-		IMessage message = new IMessage();
-		ITransportable transportable = new ITransportable();
-		String streamName = "com.lmax.wibble";
-		System.out.println("publishing " + RING_SIZE + " messages");
-		for (int i = 0; i < RING_SIZE; i++) {
-			ringBuffer.publishEvent(p, message, transportable, streamName);
-			Thread.sleep(10);
-		}
-		System.out.println("start disruptor");
-		disruptor.start();
-		System.out.println("continue publishing");
-		while (true) {
-			ringBuffer.publishEvent(p, message, transportable, streamName);
-			Thread.sleep(10);
-		}
-	}
+    static final int RING_SIZE = 1024;
+
+    public static void main(String[] args) throws InterruptedException {
+        Disruptor<ObjectBox> disruptor = new Disruptor<>(ObjectBox.FACTORY, RING_SIZE,
+                DaemonThreadFactory.INSTANCE, ProducerType.MULTI, new BlockingWaitStrategy());
+        disruptor.handleEventsWith(new Consumer()).then(new Consumer());
+        final RingBuffer<ObjectBox> ringBuffer = disruptor.getRingBuffer();
+        Publisher p = new Publisher();
+        IMessage message = new IMessage();
+        ITransportable transportable = new ITransportable();
+        String streamName = "com.lmax.wibble";
+        System.out.println("publishing " + RING_SIZE + " messages");
+        for (int i = 0; i < RING_SIZE; i++) {
+            ringBuffer.publishEvent(p, message, transportable, streamName);
+            Thread.sleep(10);
+        }
+        System.out.println("start disruptor");
+        disruptor.start();
+        System.out.println("continue publishing");
+        while (true) {
+            ringBuffer.publishEvent(p, message, transportable, streamName);
+            Thread.sleep(10);
+        }
+    }
 }

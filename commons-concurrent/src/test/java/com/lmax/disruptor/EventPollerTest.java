@@ -1,80 +1,67 @@
 package com.lmax.disruptor;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import com.lmax.disruptor.EventPoller.PollState;
+import org.junit.Test;
 
 import java.util.ArrayList;
 
-import org.junit.Test;
-
-import com.lmax.disruptor.EventPoller.PollState;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 public class EventPollerTest {
-	@Test
-	public void shouldPollForEvents() throws Exception {
-		final Sequence gatingSequence = new Sequence();
-		final SingleProducerSequencer sequencer = new SingleProducerSequencer(16, new BusySpinWaitStrategy());
-		final EventPoller.Handler<Object> handler = new EventPoller.Handler<Object>() {
-			public boolean onEvent(Object event, long sequence, boolean endOfBatch) throws Exception {
-				return false;
-			}
-		};
+    @Test
+    public void shouldPollForEvents() throws Exception {
 
-		final Object[] data = new Object[16];
-		final DataProvider<Object> provider = new DataProvider<Object>() {
-			public Object get(long sequence) {
-				return data[(int) sequence];
-			}
-		};
+        final Sequence gatingSequence = new Sequence();
+        final SingleProducerSequencer sequencer = new SingleProducerSequencer(16, new BusySpinWaitStrategy());
 
-		final EventPoller<Object> poller = sequencer.newPoller(provider, gatingSequence);
-		final Object event = new Object();
-		data[0] = event;
+        final EventPoller.Handler<Object> handler = (Object event, long sequence, boolean endOfBatch) -> false;
 
-		assertThat(poller.poll(handler), is(PollState.IDLE));
+        final Object[] data = new Object[16];
+        final DataProvider<Object> provider = (long sequence) -> data[(int) sequence];
 
-		// Publish Event.
-		sequencer.publish(sequencer.next());
-		assertThat(poller.poll(handler), is(PollState.GATING));
+        final EventPoller<Object> poller = sequencer.newPoller(provider, gatingSequence);
+        final Object event = new Object();
+        data[0] = event;
 
-		gatingSequence.incrementAndGet();
-		assertThat(poller.poll(handler), is(PollState.PROCESSING));
-	}
+        assertThat(poller.poll(handler), is(PollState.IDLE));
 
-	@Test
-	public void shouldSuccessfullyPollWhenBufferIsFull() throws Exception {
-		final ArrayList<byte[]> events = new ArrayList<byte[]>();
+        // Publish Event.
+        sequencer.publish(sequencer.next());
+        assertThat(poller.poll(handler), is(PollState.GATING));
 
-		final EventPoller.Handler<byte[]> handler = new EventPoller.Handler<byte[]>() {
-			public boolean onEvent(byte[] event, long sequence, boolean endOfBatch) throws Exception {
-				events.add(event);
-				return !endOfBatch;
-			}
-		};
+        gatingSequence.incrementAndGet();
+        assertThat(poller.poll(handler), is(PollState.PROCESSING));
+    }
 
-		EventFactory<byte[]> factory = new EventFactory<byte[]>() {
-			@Override
-			public byte[] newInstance() {
-				return new byte[1];
-			}
-		};
+    @Test
+    public void shouldSuccessfullyPollWhenBufferIsFull() throws Exception {
 
-		final RingBuffer<byte[]> ringBuffer = RingBuffer.createMultiProducer(factory, 4, new SleepingWaitStrategy());
+        final ArrayList<byte[]> events = new ArrayList<>();
 
-		final EventPoller<byte[]> poller = ringBuffer.newPoller();
-		ringBuffer.addGatingSequences(poller.getSequence());
+        final EventPoller.Handler<byte[]> handler = (byte[] event, long sequence, boolean endOfBatch) -> {
+            events.add(event);
+            return !endOfBatch;
+        };
 
-		int count = 4;
+        EventFactory<byte[]> factory = () -> new byte[1];
 
-		for (byte i = 1; i <= count; ++i) {
-			long next = ringBuffer.next();
-			ringBuffer.get(next)[0] = i;
-			ringBuffer.publish(next);
-		}
+        final RingBuffer<byte[]> ringBuffer = RingBuffer.createMultiProducer(factory, 4, new SleepingWaitStrategy());
 
-		// think of another thread
-		poller.poll(handler);
+        final EventPoller<byte[]> poller = ringBuffer.newPoller();
+        ringBuffer.addGatingSequences(poller.getSequence());
 
-		assertThat(events.size(), is(4));
-	}
+        int count = 4;
+
+        for (byte i = 1; i <= count; ++i) {
+            long next = ringBuffer.next();
+            ringBuffer.get(next)[0] = i;
+            ringBuffer.publish(next);
+        }
+
+        // think of another thread
+        poller.poll(handler);
+
+        assertThat(events.size(), is(4));
+    }
 }

@@ -18,6 +18,7 @@ package com.lmax.disruptor.dsl.stubs;
 import com.lmax.disruptor.util.DaemonThreadFactory;
 import org.junit.Assert;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadFactory;
@@ -25,52 +26,54 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class StubThreadFactory implements ThreadFactory {
-	private final DaemonThreadFactory threadFactory = DaemonThreadFactory.INSTANCE;
-	private final Collection<Thread> threads = new CopyOnWriteArrayList<Thread>();
-	private final AtomicBoolean ignoreExecutions = new AtomicBoolean(false);
-	private final AtomicInteger executionCount = new AtomicInteger(0);
 
-	@Override
-	public Thread newThread(final Runnable command) {
-		executionCount.getAndIncrement();
-		Runnable toExecute = command;
-		if (ignoreExecutions.get()) {
-			toExecute = new NoOpRunnable();
-		}
-		final Thread thread = threadFactory.newThread(toExecute);
-		thread.setName(command.toString());
-		threads.add(thread);
-		return thread;
-	}
+    private final DaemonThreadFactory threadFactory = DaemonThreadFactory.INSTANCE;
+    private final Collection<Thread> threads = new CopyOnWriteArrayList<>();
+    private final AtomicBoolean ignoreExecutions = new AtomicBoolean(false);
+    private final AtomicInteger executionCount = new AtomicInteger(0);
 
-	public void joinAllThreads() {
-		for (Thread thread : threads) {
-			if (thread.isAlive()) {
-				try {
-					thread.interrupt();
-					thread.join(5000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
+    @Override
+    public Thread newThread(@Nonnull final Runnable command) {
+        executionCount.getAndIncrement();
+        Runnable toExecute = command;
+        if (ignoreExecutions.get()) {
+            toExecute = new NoOpRunnable();
+        }
+        final Thread thread = threadFactory.newThread(toExecute);
+        thread.setName(command.toString());
+        threads.add(thread);
+        return thread;
+    }
 
-			Assert.assertFalse("Failed to stop thread: " + thread, thread.isAlive());
-		}
+    public void joinAllThreads() {
+        for (Thread thread : threads) {
+            if (thread.isAlive()) {
+                try {
+                    thread.interrupt();
+                    thread.join(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
 
-		threads.clear();
-	}
+            Assert.assertFalse("Failed to stop thread: " + thread, thread.isAlive());
+        }
 
-	public void ignoreExecutions() {
-		ignoreExecutions.set(true);
-	}
+        threads.clear();
+    }
 
-	public int getExecutionCount() {
-		return executionCount.get();
-	}
+    public void ignoreExecutions() {
+        ignoreExecutions.set(true);
+    }
 
-	private static final class NoOpRunnable implements Runnable {
-		@Override
-		public void run() {
-		}
-	}
+    public int getExecutionCount() {
+        return executionCount.get();
+    }
+
+    private static final class NoOpRunnable implements Runnable {
+        @Override
+        public void run() {
+        }
+    }
+
 }
