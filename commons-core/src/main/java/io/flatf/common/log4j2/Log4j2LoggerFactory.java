@@ -112,10 +112,7 @@ public final class Log4j2LoggerFactory {
      * @param level      LogLevel
      */
     private static void buildAndUpdate(String loggerName, LogLevel level) {
-        if (CTX == null)
-            CTX = (LoggerContext) LogManager.getContext(false);
-        if (CONF == null)
-            CONF = CTX.getConfiguration();
+        ensureConfiguration();
 
         // 基于时间分割日志文件
         TriggeringPolicy timeBased = TimeBasedTriggeringPolicy.newBuilder()
@@ -168,6 +165,13 @@ public final class Log4j2LoggerFactory {
         CTX.updateLoggers();
     }
 
+    private static void ensureConfiguration() {
+        if (CTX == null)
+            CTX = (LoggerContext) LogManager.getContext(false);
+        if (CONF == null)
+            CONF = CTX.getConfiguration();
+    }
+
     /**
      * 关闭动态创建的logger，避免内存不够用或者文件打开太多
      *
@@ -175,6 +179,7 @@ public final class Log4j2LoggerFactory {
      */
     public static void removeAndUpdate(String loggerName) {
         synchronized (MUTEX) {
+            ensureConfiguration();
             CONF.getAppender(loggerName).stop();
             CONF.getLoggerConfig(loggerName).removeAppender(loggerName);
             CONF.removeLogger(loggerName);
@@ -201,14 +206,11 @@ public final class Log4j2LoggerFactory {
      */
     public static org.slf4j.Logger getBizLogger(String loggerName, LogLevel level) {
         synchronized (MUTEX) {
+            ensureConfiguration();
             if (!CONF.getLoggers().containsKey(loggerName))
                 buildAndUpdate(loggerName, level);
         }
         return org.slf4j.LoggerFactory.getLogger(loggerName);
-    }
-
-    public static void main(String[] args) {
-        System.out.println(System.getProperty("java.io.tmpdir"));
     }
 
 }

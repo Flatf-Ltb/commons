@@ -1,7 +1,5 @@
 package io.flatf.common.concurrent.queue;
 
-import io.flatf.common.thread.Sleep;
-import io.flatf.common.thread.Threads;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpmcArrayQueue;
 
@@ -25,7 +23,7 @@ public final class ConcurrentPriorityQueue<E> implements Comparable<ConcurrentPr
     public ConcurrentPriorityQueue(long sequence, int priorityQueueSize, int normalQueueSize) {
         this.sequence = sequence;
         this.priorityQueue = new MpmcArrayQueue<>(minPow2(priorityQueueSize));
-        this.normalQueue = new MpmcArrayQueue<>(minPow2(priorityQueueSize));
+        this.normalQueue = new MpmcArrayQueue<>(minPow2(normalQueueSize));
     }
 
     public long getSequence() {
@@ -74,41 +72,4 @@ public final class ConcurrentPriorityQueue<E> implements Comparable<ConcurrentPr
         return Long.compare(sequence, o.sequence);
     }
 
-
-    public static void main(String[] args) {
-
-        ConcurrentPriorityQueue<String> queue = new ConcurrentPriorityQueue<>(0, 256, 1024);
-
-        Threads.startNewMaxPriorityThread("test0", () -> {
-            for (int i = 0; i < 50; i++) {
-                if (i % 6 == 0) {
-                    queue.priorityOffer("TEST[0] priority put : " + i);
-                } else {
-                    queue.offer("TEST[0] put : " + i);
-                }
-                Sleep.millis(2);
-            }
-        });
-        Threads.startNewMaxPriorityThread("test1", () -> {
-            for (int i = 0; i < 50; i++) {
-                if (i % 7 == 0) {
-                    queue.priorityOffer("TEST[1] priority put : " + i);
-                } else {
-                    queue.offer("TEST[1] put : " + i);
-                }
-                Sleep.millis(3);
-            }
-        });
-        Threads.startNewMaxPriorityThread("test2", () -> {
-            do {
-                String e = queue.poll();
-                if (e != null) {
-                    System.out.println(e);
-                } else {
-                    System.out.println("Grab null sleep 1 ms");
-                    Sleep.millis(1);
-                }
-            } while (true);
-        });
-    }
 }

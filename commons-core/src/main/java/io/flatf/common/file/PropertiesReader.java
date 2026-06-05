@@ -10,9 +10,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Objects;
 import java.util.Properties;
 
+import static io.flatf.common.character.Charsets.UTF8;
 import static io.flatf.common.file.FileScanner.depthFirst;
 import static io.flatf.common.util.StringSupport.notDecimal;
 
@@ -38,8 +41,8 @@ public final class PropertiesReader {
                 log.info("Properties file -> [{}] start load", file);
                 String fileName = file.getName();
                 Properties prop = new Properties();
-                try (FileInputStream fis = new FileInputStream(file)) {
-                    prop.load(fis);
+                try (Reader reader = new InputStreamReader(new FileInputStream(file), UTF8)) {
+                    prop.load(reader);
                 }
                 PropertiesMap.put(deleteSuffix(fileName), prop);
                 for (String propName : prop.stringPropertyNames()) {
@@ -80,7 +83,7 @@ public final class PropertiesReader {
         if (fileName == null)
             return "";
         if (fileName.endsWith(FILE_SUFFIX))
-            return fileName.split(FILE_SUFFIX)[0];
+            return fileName.substring(0, fileName.length() - FILE_SUFFIX.length());
         return fileName;
     }
 
@@ -168,19 +171,6 @@ public final class PropertiesReader {
                     propName, value, fileName, e);
             throw e;
         }
-    }
-
-    public static void main(String[] args) {
-        File file = new File("");
-        System.out.println(file.getPath());
-        System.out.println(file.getAbsolutePath());
-        File[] listFiles = file.listFiles();
-        if (listFiles != null)
-            for (File file2 : listFiles) {
-                System.out.println(file2.getName());
-            }
-        System.out.println(System.getProperty("user.dir"));
-
     }
 
 }

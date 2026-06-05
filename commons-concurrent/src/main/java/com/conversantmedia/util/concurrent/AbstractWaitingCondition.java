@@ -62,7 +62,7 @@ public abstract class AbstractWaitingCondition implements Condition {
                     if (t.isInterrupted()) {
                         throw new InterruptedException();
                     }
-                    // return;
+                    return;
                 } else {
                     // wait to become a waiter
                     // int spin = 0;
@@ -90,7 +90,7 @@ public abstract class AbstractWaitingCondition implements Condition {
                         }
                         throw new InterruptedException();
                     }
-                    // return;
+                    return;
                 }
             } finally {
                 waitCount.decrement();
@@ -120,7 +120,7 @@ public abstract class AbstractWaitingCondition implements Condition {
                     if (t.isInterrupted()) {
                         throw new InterruptedException();
                     }
-                    // return;
+                    return;
                 } else {
                     // wait to become a waiter
                     // int spin = 0;
@@ -146,7 +146,7 @@ public abstract class AbstractWaitingCondition implements Condition {
                         }
                         throw new InterruptedException();
                     }
-                    // return;
+                    return;
                 }
             } finally {
                 waitCount.decrement();

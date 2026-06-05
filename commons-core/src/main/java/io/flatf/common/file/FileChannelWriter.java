@@ -2,7 +2,7 @@ package io.flatf.common.file;
 
 import io.flatf.common.lang.Validator;
 import io.flatf.common.log4j2.Log4j2LoggerFactory;
-import io.flatf.common.serialization.specific.BytesSerializer;
+import io.flatf.infra.serialization.specific.BytesSerializer;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 
@@ -13,13 +13,10 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import static io.flatf.common.character.Charsets.UTF8;
 import static io.flatf.common.character.Separator.LINE_SEPARATOR;
-import static io.flatf.common.sys.SysProperties.JAVA_IO_TMPDIR_FILE;
 
 /**
  * Use FileChannel
@@ -94,7 +91,7 @@ public final class FileChannelWriter {
         if (capacity < 128)
             capacity = 4096;
         File parentFile = target.getParentFile();
-        if (!parentFile.exists()) {
+        if (parentFile != null && !parentFile.exists()) {
             boolean succeed = parentFile.mkdirs();
             log.debug("mkdir -> {} is {}", parentFile, succeed);
         }
@@ -157,33 +154,6 @@ public final class FileChannelWriter {
         }
         // Clear buffer to input
         buffer.clear();
-    }
-
-    public static void main(String[] args) {
-
-        long nanoTime0 = System.nanoTime();
-
-        List<String> lines = new ArrayList<>();
-        for (int i = 0; i < 1000000; i++) {
-            StringBuilder builder = new StringBuilder();
-            for (int j = 0; j < 100; j++) {
-                builder.append(j);
-                builder.append(',');
-            }
-            builder.append(LINE_SEPARATOR);
-            lines.add(builder.toString());
-        }
-
-        try {
-            write(lines, UTF8, new File(JAVA_IO_TMPDIR_FILE, "test.csv"), 2048, true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        long nanoTime1 = System.nanoTime();
-
-        System.out.println((nanoTime1 - nanoTime0) / 1000);
-
     }
 
 }

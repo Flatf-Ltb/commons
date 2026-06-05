@@ -32,7 +32,7 @@ public class PreloadingQueue<E> implements MultiConsumerQueue<E> {
     @SuppressWarnings("unchecked")
     public PreloadingQueue(int size) {
         if (size <= 0) {
-            throw new IllegalArgumentException("size is too big.");
+            throw new IllegalArgumentException("size must be positive.");
         }
         this.containers = new EventContainer[size];
         for (int i = 0; i < size; i++)
@@ -46,8 +46,10 @@ public class PreloadingQueue<E> implements MultiConsumerQueue<E> {
     @Override
     @LockHeld
     public boolean enqueue(E e) {
+        boolean locked = false;
         try {
             lock.lockInterruptibly();
+            locked = true;
             while (count.get() == size)
                 notFull.await();
             containers[writeOffset].loading(e);
@@ -57,10 +59,13 @@ public class PreloadingQueue<E> implements MultiConsumerQueue<E> {
             notEmpty.signal();
             return true;
         } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
             log.error("PreloadingQueue.enqueue() -> {}", ie.getMessage());
             return false;
         } finally {
-            lock.unlock();
+            if (locked) {
+                lock.unlock();
+            }
         }
     }
 
@@ -68,8 +73,10 @@ public class PreloadingQueue<E> implements MultiConsumerQueue<E> {
     @LockHeld
     @Nullable
     public E dequeue() {
+        boolean locked = false;
         try {
             lock.lockInterruptibly();
+            locked = true;
             while (count.get() == 0)
                 notEmpty.await();
             E e = containers[readOffset].unloading();
@@ -79,10 +86,13 @@ public class PreloadingQueue<E> implements MultiConsumerQueue<E> {
             notFull.signal();
             return e;
         } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
             log.error("PreloadingQueue.dequeue() : {}", ie.getMessage());
             return null;
         } finally {
-            lock.unlock();
+            if (locked) {
+                lock.unlock();
+            }
         }
     }
 

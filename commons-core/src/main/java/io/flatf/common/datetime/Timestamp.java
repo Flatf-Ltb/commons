@@ -1,10 +1,9 @@
 package io.flatf.common.datetime;
 
-import io.flatf.common.constant.TimeZoneConst;
 import io.flatf.common.epoch.EpochUtil;
 import io.flatf.common.epoch.EpochUnit;
 import io.flatf.common.epoch.HighResolutionEpoch;
-import io.flatf.common.serialization.specific.JsonSerializable;
+import io.flatf.infra.serialization.specific.JsonSerializable;
 
 import javax.annotation.Nonnull;
 import java.time.Instant;
@@ -142,7 +141,7 @@ public final class Timestamp implements Comparable<Timestamp>, JsonSerializable 
                 case SECOND -> this.instant = ofEpochSecond(epoch);
                 case MILLIS -> this.instant = ofEpochMilli(epoch);
                 case MICROS -> this.instant = ofEpochSecond(floorDiv(epoch, MICROS_PER_SECONDS),
-                        floorMod(epoch, MICROS_PER_SECONDS));
+                        floorMod(epoch, MICROS_PER_SECONDS) * 1000L);
                 case NANOS -> this.instant = ofEpochSecond(floorDiv(epoch, NANOS_PER_SECOND),
                         floorMod(epoch, NANOS_PER_SECOND));
                 default -> throw new IllegalStateException("[" + unit + "] is illegal");
@@ -152,7 +151,7 @@ public final class Timestamp implements Comparable<Timestamp>, JsonSerializable 
 
     @Override
     public int compareTo(Timestamp o) {
-        return Long.compare(epoch, o.epoch);
+        return getInstant().compareTo(o.getInstant());
     }
 
     private static final String epochField = "{\"epoch\" : ";
@@ -162,75 +161,25 @@ public final class Timestamp implements Comparable<Timestamp>, JsonSerializable 
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder(90);
-        builder.append(epochField);
-        builder.append(epoch);
-        builder.append(epochUnitField);
-        builder.append(unit);
-        if (instant != null) {
-            builder.append(instantField);
-            builder.append(instant);
-        }
-        builder.append(end);
-        return builder.toString();
+        return toJson();
     }
 
     @Nonnull
     @Override
     public String toJson() {
-        return toString();
-    }
-
-    public static void main(String[] args) {
-
-        System.out.println(TimeZoneConst.CST);
-
-        Timestamp timestamp = Timestamp.nowWithMillis();
-        System.out.println(timestamp);
-
-        for (int i = 0; i < 100000; i++) {
-            EpochUtil.getEpochMillis();
-            Timestamp.nowWithMillis();
-            Instant.now();
-            i++;
-            i--;
-        }
-
-        for (int i = 0; i < 10000; i++) {
-            long l0_0 = System.nanoTime();
-            // EpochTime.milliseconds();
-            // EpochTimestamp.now();
-            Instant.now();
-            long l0_1 = System.nanoTime();
-            long l0 = l0_1 - l0_0;
-            System.out.println(l0);
-        }
-
-        long l1_0 = System.nanoTime();
-        Timestamp.nowWithMillis();
-        long l1_1 = System.nanoTime();
-
-        long l2_0 = System.nanoTime();
-        Instant.now();
-        long l2_1 = System.nanoTime();
-
-        long l1 = l1_1 - l1_0;
-        long l2 = l2_1 - l2_0;
-
-        System.out.println(l1);
-        System.out.println(l2);
-
-        Timestamp now = Timestamp.nowWithMillis();
-
-        System.out.println(now.getEpoch());
-        System.out.println(now.getInstant().getEpochSecond() * 1000000 + now.getInstant().getNano() / 1000);
-        System.out.println(now.getInstant());
-        System.out.println(now);
-
-        System.out.println(Timestamp.nowWithMillis());
-        System.out.println(Timestamp.withEpochMillis(47237547328L).getDateTimeWith(TimeZoneConst.UTC));
-        System.out.println(Timestamp.withDateTime(LocalDateTime.now(), TimeZoneConst.CST));
-
+        StringBuilder builder = new StringBuilder(100);
+        builder.append(epochField);
+        builder.append(epoch);
+        builder.append(epochUnitField);
+        builder.append('"');
+        builder.append(unit);
+        builder.append('"');
+        builder.append(instantField);
+        builder.append('"');
+        builder.append(getInstant());
+        builder.append('"');
+        builder.append(end);
+        return builder.toString();
     }
 
 }

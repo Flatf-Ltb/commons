@@ -10,7 +10,7 @@ import org.agrona.concurrent.ringbuffer.RingBufferDescriptor;
 
 import javax.annotation.Nonnull;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Objects;
 
 import static java.nio.ByteBuffer.allocate;
 
@@ -18,28 +18,20 @@ public class UnsafeRingBuffer {
 
     private final RingBuffer ringBuffer;
 
-    private final boolean isManyToOne;
-
-    private final AtomicBoolean senderHasCreated = new AtomicBoolean(false);
+    private final MessageHandler handler;
 
     private UnsafeRingBuffer(@Nonnull RingBuffer ringBuffer,
-                             @Nonnull MessageHandler handler,
-                             boolean isManyToOne) {
-        this.ringBuffer = ringBuffer;
-        this.isManyToOne = isManyToOne;
+                             @Nonnull MessageHandler handler) {
+        this.ringBuffer = Objects.requireNonNull(ringBuffer, "ringBuffer");
+        this.handler = Objects.requireNonNull(handler, "handler");
     }
 
-    private void initHandler(MessageHandler handler) {
-        ringBuffer.read(handler);
+    public int read() {
+        return ringBuffer.read(handler);
     }
 
     public Agent allocateSender() {
-        if (isManyToOne) {
-            if (senderHasCreated.compareAndSet(false, true)) {
-                return null;
-            }
-        }
-        return null;
+        throw new UnsupportedOperationException("allocateSender requires a message source and is not implemented");
     }
 
 
@@ -66,19 +58,16 @@ public class UnsafeRingBuffer {
             if (buffer == null)
                 buffer = allocate(size + RingBufferDescriptor.TRAILER_LENGTH);
             return new UnsafeRingBuffer(
-                    new ManyToOneRingBuffer(new UnsafeBuffer(buffer)), handler, true);
+                    new ManyToOneRingBuffer(new UnsafeBuffer(buffer)), handler);
         }
 
         public UnsafeRingBuffer withOneToOne(final MessageHandler handler) {
             if (buffer == null)
                 buffer = allocate(size + RingBufferDescriptor.TRAILER_LENGTH);
             return new UnsafeRingBuffer(
-                    new OneToOneRingBuffer(new UnsafeBuffer(buffer)), handler, false);
+                    new OneToOneRingBuffer(new UnsafeBuffer(buffer)), handler);
         }
 
     }
 
 }
-
-
-

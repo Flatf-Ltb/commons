@@ -80,8 +80,12 @@ public final class LongAdaptiveRadixTreeMap<V> {
     }
 
     public V getOrInsert(final long key, Supplier<V> supplier) {
-        // TODO implement
-        return null;
+        V value = get(key);
+        if (value == null) {
+            value = supplier.get();
+            put(key, value);
+        }
+        return value;
     }
 
     public void getOrInsertFromNode(final ArtNode<V> node, Supplier<V> supplier) {

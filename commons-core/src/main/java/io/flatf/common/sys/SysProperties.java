@@ -93,7 +93,7 @@ public final class SysProperties {
     /**
      * ${user.home}/.config/
      */
-    public static final File USER_HOME_CONFIG_FOLDER = new File(USER_HOME_FILE + ".config/");
+    public static final File USER_HOME_CONFIG_FOLDER = new File(USER_HOME_FILE, ".config");
 
     /**
      * System.getProperty("user.dir")
@@ -136,10 +136,6 @@ public final class SysProperties {
         } else {
             getProperties().forEach((key, value) -> out.println(key + " -> " + value));
         }
-    }
-
-    public static void main(String[] args) {
-        showAll();
     }
 
 }
