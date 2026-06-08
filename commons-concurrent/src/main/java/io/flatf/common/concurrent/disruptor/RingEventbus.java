@@ -10,6 +10,7 @@ import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.WaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
+import io.flatf.common.concurrent.disruptor.HandlerGraph.HandlerGraphWizard;
 import io.flatf.common.concurrent.disruptor.base.EventPublisher;
 import io.flatf.common.concurrent.disruptor.base.EventPublisher.EventPublisherArg1;
 import io.flatf.common.concurrent.disruptor.base.EventPublisher.EventPublisherArg2;
@@ -21,6 +22,7 @@ import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.lmax.disruptor.dsl.ProducerType.MULTI;
 import static com.lmax.disruptor.dsl.ProducerType.SINGLE;
@@ -40,30 +42,54 @@ import static io.flatf.common.util.StringSupport.requireNonEmptyElse;
  * <p>
  * 扩展多写和单写 [DONE]
  */
-public final class RingEventbus<E> extends RunnableComponent {
+public final class RingEventbus<E extends ReusableEvent> extends RunnableComponent {
 
     private static final Logger log = getLogger(RingEventbus.class);
+    public static final String VERIFY_SINGLE_PRODUCER_PROPERTY = "flatf.disruptor.verifySingleProducer";
 
     private final Disruptor<E> disruptor;
 
     private final RingBuffer<E> buffer;
 
+    private final AtomicReference<Thread> publisherThread;
+
     private RingEventbus(@Nullable String name, int size,
                          @Nonnull StartMode mode, @Nonnull ProducerType type,
                          @Nonnull EventFactory<E> factory,
                          @Nonnull WaitStrategy strategy,
-                         @Nonnull HandlerGraph<E> graph) {
-        super(requireNonEmptyElse(name, "reb-[" + YYMMDD_L_HHMMSSSSS.fmt(LocalDateTime.now()) + "]"));
+                         @Nonnull HandlerGraph<E> graph,
+                         boolean verifySinglePublisher) {
+        super(requireNonEmptyElse(name, "eventbus-[" + YYMMDD_L_HHMMSSSSS.fmt(LocalDateTime.now()) + "]"));
+        this.publisherThread = type == SINGLE && verifySinglePublisher ? new AtomicReference<>() : null;
         this.disruptor = new Disruptor<>(
-                // EventFactory, 队列容量
-                factory, adjustSize(size),
-                // ThreadFactory
-                ofPlatform(this.name + "-worker").priority(MAX).build(),
-                // 生产者类型, Waiting策略
-                type, strategy);
-        graph.deploy(this.disruptor);
+            // EventFactory, 队列容量
+            factory, adjustSize(size),
+            // ThreadFactory
+            ofPlatform(this.name + "-worker").priority(MAX).build(),
+            // 生产者类型, Waiting策略
+            type, strategy);
+        graph.deploy(this.disruptor, this.name);
         this.buffer = this.disruptor.getRingBuffer();
         startWith(mode);
+    }
+
+    private void verifyPublisherThread() {
+        if (publisherThread == null)
+            return;
+
+        Thread current = Thread.currentThread();
+        Thread owner = publisherThread.get();
+        if (owner == current)
+            return;
+
+        if (owner == null && publisherThread.compareAndSet(null, current))
+            return;
+
+        owner = publisherThread.get();
+        String ownerName = owner == null ? "unknown" : owner.getName();
+        throw new IllegalStateException(
+            "RingEventbus [" + name + "] is configured as singleProducer, but publish was called from multiple"
+            + " threads. owner=[" + ownerName + "], current=[" + current.getName() + "]");
     }
 
     /**
@@ -98,7 +124,7 @@ public final class RingEventbus<E> extends RunnableComponent {
      * @param <E>       Class type
      * @return Wizard<E>
      */
-    public static <E> Wizard<E> multiProducer(Class<E> eventType) {
+    public static <E extends ReusableEvent> Wizard<E> multiProducer(Class<E> eventType) {
         return multiProducer(ReflectionEventFactory.newFactory(eventType, log));
     }
 
@@ -107,7 +133,7 @@ public final class RingEventbus<E> extends RunnableComponent {
      * @param <E>     Class type
      * @return Wizard<E>
      */
-    public static <E> Wizard<E> multiProducer(EventFactory<E> factory) {
+    public static <E extends ReusableEvent> Wizard<E> multiProducer(EventFactory<E> factory) {
         return new Wizard<>(MULTI, factory);
     }
 
@@ -116,7 +142,7 @@ public final class RingEventbus<E> extends RunnableComponent {
      * @param <E>       Class type
      * @return Wizard<E>
      */
-    public static <E> Wizard<E> singleProducer(Class<E> eventType) {
+    public static <E extends ReusableEvent> Wizard<E> singleProducer(Class<E> eventType) {
         return singleProducer(ReflectionEventFactory.newFactory(eventType, log));
     }
 
@@ -125,7 +151,7 @@ public final class RingEventbus<E> extends RunnableComponent {
      * @param <E>     Class type
      * @return Wizard<E>
      */
-    public static <E> Wizard<E> singleProducer(EventFactory<E> factory) {
+    public static <E extends ReusableEvent> Wizard<E> singleProducer(EventFactory<E> factory) {
         return new Wizard<>(SINGLE, factory);
     }
 
@@ -135,8 +161,8 @@ public final class RingEventbus<E> extends RunnableComponent {
      * @return the new EventPublisher<E, A> object
      */
     public <A> EventPublisherArg1<E, A> newPublisher(
-            @Nonnull EventTranslatorOneArg<E, A> translator) {
-        return EventPublisher.newPublisher(buffer, translator);
+        @Nonnull EventTranslatorOneArg<E, A> translator) {
+        return EventPublisher.newPublisher(buffer, translator, this::verifyPublisherThread);
     }
 
     /**
@@ -146,8 +172,8 @@ public final class RingEventbus<E> extends RunnableComponent {
      * @return EventPublisherArg2<E, A0, A1>
      */
     public <A0, A1> EventPublisherArg2<E, A0, A1> newPublisher(
-            @Nonnull EventTranslatorTwoArg<E, A0, A1> translator) {
-        return EventPublisher.newPublisher(buffer, translator);
+        @Nonnull EventTranslatorTwoArg<E, A0, A1> translator) {
+        return EventPublisher.newPublisher(buffer, translator, this::verifyPublisherThread);
     }
 
     /**
@@ -159,9 +185,9 @@ public final class RingEventbus<E> extends RunnableComponent {
      * @throws IllegalStateException ise
      */
     public <A0, A1, A2> EventPublisherArg3<E, A0, A1, A2> newPublisher(
-            @Nonnull EventTranslatorThreeArg<E, A0, A1, A2> translator)
-            throws IllegalStateException {
-        return EventPublisher.newPublisher(this.buffer, translator);
+        @Nonnull EventTranslatorThreeArg<E, A0, A1, A2> translator)
+        throws IllegalStateException {
+        return EventPublisher.newPublisher(this.buffer, translator, this::verifyPublisherThread);
     }
 
 
@@ -169,7 +195,11 @@ public final class RingEventbus<E> extends RunnableComponent {
      * @param translator EventTranslator<E>
      */
     public void publish(EventTranslator<E> translator) {
-        buffer.publishEvent(translator);
+        verifyPublisherThread();
+        buffer.publishEvent((event, sequence) -> {
+            event.clear();
+            translator.translateTo(event, sequence);
+        });
     }
 
     /**
@@ -178,7 +208,11 @@ public final class RingEventbus<E> extends RunnableComponent {
      * @param <A>        Arg type
      */
     public <A> void publish(EventTranslatorOneArg<E, A> translator, A arg) {
-        buffer.publishEvent(translator, arg);
+        verifyPublisherThread();
+        buffer.publishEvent((event, sequence, value) -> {
+            event.clear();
+            translator.translateTo(event, sequence, value);
+        }, arg);
     }
 
     /**
@@ -189,7 +223,11 @@ public final class RingEventbus<E> extends RunnableComponent {
      * @param <A1>       A1 Type
      */
     public <A0, A1> void publish(EventTranslatorTwoArg<E, A0, A1> translator, A0 arg0, A1 arg1) {
-        buffer.publishEvent(translator, arg0, arg1);
+        verifyPublisherThread();
+        buffer.publishEvent((event, sequence, value0, value1) -> {
+            event.clear();
+            translator.translateTo(event, sequence, value0, value1);
+        }, arg0, arg1);
     }
 
     /**
@@ -202,10 +240,14 @@ public final class RingEventbus<E> extends RunnableComponent {
      * @param <A2>       A2 Type
      */
     public <A0, A1, A2> void publish(EventTranslatorThreeArg<E, A0, A1, A2> translator, A0 arg0, A1 arg1, A2 arg2) {
-        buffer.publishEvent(translator, arg0, arg1, arg2);
+        verifyPublisherThread();
+        buffer.publishEvent((event, sequence, value0, value1, value2) -> {
+            event.clear();
+            translator.translateTo(event, sequence, value0, value1, value2);
+        }, arg0, arg1, arg2);
     }
 
-    public static class Wizard<E> {
+    public static class Wizard<E extends ReusableEvent> {
 
         protected final EventFactory<E> factory;
         protected final ProducerType type;
@@ -214,6 +256,8 @@ public final class RingEventbus<E> extends RunnableComponent {
         protected int size = 256;
         protected StartMode startMode = StartMode.auto();
         protected WaitStrategy strategy = YIELDING.getInstance();
+        protected boolean verifySingleProducer = Boolean.getBoolean(VERIFY_SINGLE_PRODUCER_PROPERTY);
+        protected EventExceptionCallback<E> exceptionCallback;
 
         private Wizard(ProducerType type, EventFactory<E> factory) {
             this.type = type;
@@ -244,29 +288,53 @@ public final class RingEventbus<E> extends RunnableComponent {
             return this;
         }
 
+        public Wizard<E> verifySingleProducer() {
+            return verifySingleProducer(true);
+        }
+
+        public Wizard<E> verifySingleProducer(boolean verifySingleProducer) {
+            this.verifySingleProducer = verifySingleProducer;
+            return this;
+        }
+
+        public Wizard<E> onException(EventExceptionCallback<E> exceptionCallback) {
+            this.exceptionCallback = exceptionCallback;
+            return this;
+        }
+
         @SafeVarargs
         public final RingEventbus<E> withBroadcast(EventHandler<E>... handlers) {
             requiredLength(handlers, 1, "handlers");
-            return new RingEventbus<>(name, size, startMode, type, factory, strategy, HandlerGraph.with(handlers).build());
+            return new RingEventbus<>(name, size, startMode, type, factory, strategy,
+                applyExceptionCallback(HandlerGraph.with(handlers).build()), verifySingleProducer);
         }
 
         @SafeVarargs
         public final RingEventbus<E> withPipeline(EventHandler<E>... handlers) {
             requiredLength(handlers, 1, "handlers");
-            HandlerGraph.HandlerGraphWizard<E> wizard = HandlerGraph.with(handlers[0]);
+            HandlerGraphWizard<E> wizard = HandlerGraph.with(handlers[0]);
             for (int i = 1; i < handlers.length; i++)
                 wizard.then(handlers[i]);
-            return new RingEventbus<>(name, size, startMode, type, factory, strategy, wizard.build());
+            return new RingEventbus<>(name, size, startMode, type, factory, strategy,
+                applyExceptionCallback(wizard.build()), verifySingleProducer);
         }
 
         public RingEventbus<E> withHandler(EventHandler<E> handler) {
             nonNull(handler, "handler");
-            return new RingEventbus<>(name, size, startMode, type, factory, strategy, HandlerGraph.with(handler).build());
+            return new RingEventbus<>(name, size, startMode, type, factory, strategy,
+                applyExceptionCallback(HandlerGraph.with(handler).build()), verifySingleProducer);
         }
 
         public RingEventbus<E> withHandlerGraph(HandlerGraph<E> graph) {
             nonNull(graph, "graph");
-            return new RingEventbus<>(name, size, startMode, type, factory, strategy, graph);
+            return new RingEventbus<>(name, size, startMode, type, factory, strategy,
+                applyExceptionCallback(graph), verifySingleProducer);
+        }
+
+        private HandlerGraph<E> applyExceptionCallback(HandlerGraph<E> graph) {
+            if (exceptionCallback != null)
+                return graph.withExceptionCallback(exceptionCallback);
+            return graph;
         }
 
     }

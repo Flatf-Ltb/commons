@@ -1,6 +1,5 @@
 package io.flatf.common.concurrent.disruptor;
 
-import com.lmax.disruptor.support.LongEvent;
 import io.flatf.common.concurrent.disruptor.base.EventPublisher.EventPublisherArg1;
 import io.flatf.common.thread.Sleep;
 import io.flatf.common.thread.Threads;
@@ -18,8 +17,8 @@ public class RingMulticasterTest {
         LongAdder p0 = new LongAdder();
         LongAdder p1 = new LongAdder();
         LongAdder p2 = new LongAdder();
-        RingEventbus<LongEvent> multicaster = RingEventbus
-                .singleProducer(LongEvent.class)
+        RingEventbus<ReusableLongEvent> multicaster = RingEventbus
+                .singleProducer(ReusableLongEvent.FACTORY)
                 .name("Test-Multicaster").waitStrategy(YIELDING.getInstance()).size(32)
                 .withBroadcast((event, sequence, endOfBatch) -> {
                     System.out.println("sequence -> " + sequence + " p0 - " + event.get() + " : " + endOfBatch);
@@ -32,8 +31,8 @@ public class RingMulticasterTest {
                     p2.increment();
                 });
 
-        EventPublisherArg1<LongEvent, Long> pub =
-                multicaster.newPublisher((LongEvent event, long sequence, Long l) -> event.set(l));
+        EventPublisherArg1<ReusableLongEvent, Long> pub =
+                multicaster.newPublisher((ReusableLongEvent event, long sequence, Long l) -> event.set(l));
 
         Thread thread = Threads.startNewThread(() -> {
             for (long l = 0L; l < 1000; l++)

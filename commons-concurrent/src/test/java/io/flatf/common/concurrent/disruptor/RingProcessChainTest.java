@@ -1,6 +1,5 @@
 package io.flatf.common.concurrent.disruptor;
 
-import com.lmax.disruptor.support.LongEvent;
 import io.flatf.common.thread.Sleep;
 import io.flatf.common.thread.Threads;
 import org.junit.Test;
@@ -17,8 +16,8 @@ public class RingProcessChainTest {
         LongAdder p0 = new LongAdder();
         LongAdder p1 = new LongAdder();
         LongAdder p2 = new LongAdder();
-        RingEventbus<LongEvent> pipeline = RingEventbus
-                .singleProducer(LongEvent.class).
+        RingEventbus<ReusableLongEvent> pipeline = RingEventbus
+                .singleProducer(ReusableLongEvent.FACTORY).
                 name("Test-RingProcessChain").size(32).waitStrategy(YIELDING.getInstance())
                 .withPipeline(
                         (event, sequence, endOfBatch) -> {
@@ -34,7 +33,7 @@ public class RingProcessChainTest {
                             p2.increment();
                         });
 
-        var publisher = pipeline.newPublisher((LongEvent event, long sequence, Long l) -> event.set(l));
+        var publisher = pipeline.newPublisher((ReusableLongEvent event, long sequence, Long l) -> event.set(l));
 
         Thread thread = Threads.startNewThread(() -> {
             for (long l = 0L; l < 1000; l++) {

@@ -10,7 +10,7 @@ import com.lmax.disruptor.WaitStrategy;
  *
  * @param <E> Event Type
  */
-public abstract class RingEventAggregator<E> implements EventHandler<E> {
+public abstract class RingEventAggregator<E extends ReusableEvent> implements EventHandler<E> {
 
     protected final RingEventbus<E> eventbus;
 
