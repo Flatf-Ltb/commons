@@ -19,6 +19,6 @@ public class EventPublisherFactoryTest {
     private static void assertHasNoPublicConstructor(Class<?> type) {
         for (var constructor : type.getDeclaredConstructors())
             assertFalse(type.getName() + " constructor must not be public",
-                    Modifier.isPublic(constructor.getModifiers()));
+                Modifier.isPublic(constructor.getModifiers()));
     }
 }

@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class RingEventbusSingleProducerVerificationTest {
@@ -13,11 +14,11 @@ public class RingEventbusSingleProducerVerificationTest {
     @Test
     public void enabledSingleProducerVerificationRejectsDirectPublishFromAnotherThread() throws Exception {
         RingEventbus<ReusableLongEvent> eventbus = RingEventbus
-                .singleProducer(ReusableLongEvent.FACTORY)
-                .name("single-producer-direct-verification")
-                .verifySingleProducer()
-                .buildWith((event, sequence, endOfBatch) -> {
-                });
+            .singleProducer(ReusableLongEvent.FACTORY)
+            .name("single-producer-direct-verification")
+            .verifySingleProducer()
+            .buildWith((event, sequence, endOfBatch) -> {
+            });
 
         try {
             eventbus.publish((event, sequence) -> event.set(1L));
@@ -35,10 +36,10 @@ public class RingEventbusSingleProducerVerificationTest {
     public void systemPropertyEnablesSingleProducerVerification() throws Exception {
         withProperty(RingEventbus.VERIFY_SINGLE_PRODUCER_PROPERTY, "true", () -> {
             RingEventbus<ReusableLongEvent> eventbus = RingEventbus
-                    .singleProducer(ReusableLongEvent.FACTORY)
-                    .name("single-producer-system-property-verification")
-                    .buildWith((event, sequence, endOfBatch) -> {
-                    });
+                .singleProducer(ReusableLongEvent.FACTORY)
+                .name("single-producer-system-property-verification")
+                .buildWith((event, sequence, endOfBatch) -> {
+                });
 
             try {
                 eventbus.publish((event, sequence) -> event.set(1L));
@@ -56,13 +57,13 @@ public class RingEventbusSingleProducerVerificationTest {
     @Test
     public void enabledSingleProducerVerificationRejectsPublisherFromAnotherThread() throws Exception {
         RingEventbus<ReusableLongEvent> eventbus = RingEventbus
-                .singleProducer(ReusableLongEvent.FACTORY)
-                .name("single-producer-publisher-verification")
-                .verifySingleProducer()
-                .buildWith((event, sequence, endOfBatch) -> {
-                });
+            .singleProducer(ReusableLongEvent.FACTORY)
+            .name("single-producer-publisher-verification")
+            .verifySingleProducer()
+            .buildWith((event, sequence, endOfBatch) -> {
+            });
         EventPublisherArg1<ReusableLongEvent, Long> publisher =
-                eventbus.newPublisher((event, sequence, value) -> event.set(value));
+            eventbus.newPublisher((event, sequence, value) -> event.set(value));
 
         try {
             publisher.publish(1L);
@@ -79,18 +80,18 @@ public class RingEventbusSingleProducerVerificationTest {
     @Test
     public void multiProducerIgnoresSingleProducerVerification() throws Exception {
         RingEventbus<ReusableLongEvent> eventbus = RingEventbus
-                .multiProducer(ReusableLongEvent.FACTORY)
-                .name("multi-producer-with-verification")
-                .verifySingleProducer()
-                .buildWith((event, sequence, endOfBatch) -> {
-                });
+            .multiProducer(ReusableLongEvent.FACTORY)
+            .name("multi-producer-with-verification")
+            .verifySingleProducer()
+            .buildWith((event, sequence, endOfBatch) -> {
+            });
 
         try {
             eventbus.publish((event, sequence) -> event.set(1L));
 
             Throwable thrown = publishFromOtherThread(eventbus);
 
-            assertTrue("multiProducer should not reject publisher thread changes", thrown == null);
+            assertNull("multiProducer should not reject publisher thread changes", thrown);
         } finally {
             eventbus.stop();
         }
@@ -101,7 +102,7 @@ public class RingEventbusSingleProducerVerificationTest {
     }
 
     private static Throwable publishFromOtherThread(EventPublisherArg1<ReusableLongEvent, Long> publisher)
-            throws Exception {
+        throws Exception {
         return callFromOtherThread(() -> publisher.publish(2L));
     }
 

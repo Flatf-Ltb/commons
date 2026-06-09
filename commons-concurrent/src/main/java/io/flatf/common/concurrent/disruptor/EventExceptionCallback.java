@@ -22,7 +22,8 @@ public interface EventExceptionCallback {
         long sequence,
         @Nullable String eventType,
         @Nullable String eventSnapshot,
-        @Nonnull Throwable exception) {
+        @Nonnull Throwable exception
+    ) {
 
         private static final long NO_SEQUENCE = -1L;
 
@@ -61,30 +62,6 @@ public interface EventExceptionCallback {
                 return "<event snapshot failed: " + throwable.getClass().getName() + ": "
                        + throwable.getMessage() + ">";
             }
-        }
-
-        public String getEventbusName() {
-            return eventbusName;
-        }
-
-        public EventExceptionStage getStage() {
-            return stage;
-        }
-
-        public long getSequence() {
-            return sequence;
-        }
-
-        public String getEventType() {
-            return eventType;
-        }
-
-        public String getEventSnapshot() {
-            return eventSnapshot;
-        }
-
-        public Throwable getException() {
-            return exception;
         }
 
     }

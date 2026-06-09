@@ -41,13 +41,14 @@ public final class EventHandlerGraph<E extends ReusableEvent> {
      */
     private record ExceptionHandleProxy<E extends ReusableEvent>(
         String eventbusName,
-        EventExceptionCallback callback) implements ExceptionHandler<E> {
+        EventExceptionCallback callback
+    ) implements ExceptionHandler<E> {
 
         @Override
         public void handleEventException(Throwable ex, long sequence, E event) {
             EventExceptionContext context = EventExceptionContext.event(eventbusName, ex, sequence, event);
             log.error("{} handleEventException -> sequence==[{}], event==[{}], exception message==[{}]",
-                eventbusName, sequence, context.getEventSnapshot(), ex.getMessage(), ex);
+                eventbusName, sequence, context.eventSnapshot(), ex.getMessage(), ex);
             notifyCallback(context);
         }
 
@@ -70,7 +71,7 @@ public final class EventHandlerGraph<E extends ReusableEvent> {
                 callback.onException(context);
             } catch (Throwable throwable) {
                 log.error("RingEventbus exception callback failed -> eventbus==[{}], stage==[{}], message==[{}]",
-                    eventbusName, context.getStage(), throwable.getMessage(), throwable);
+                    eventbusName, context.stage(), throwable.getMessage(), throwable);
             }
         }
 

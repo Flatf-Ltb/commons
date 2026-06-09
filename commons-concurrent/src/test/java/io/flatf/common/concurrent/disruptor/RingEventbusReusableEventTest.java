@@ -18,11 +18,11 @@ public class RingEventbusReusableEventTest {
     public void publishClearsReusedEventBeforeTranslatorWritesNextEvent() throws Exception {
         BlockingQueue<Object> markers = new LinkedBlockingQueue<>();
         RingEventbus<ResidueEvent> eventbus = RingEventbus
-                .singleProducer(ResidueEvent.FACTORY)
-                .name("reusable-event-clear")
-                .size(16)
-                .buildWith((event, sequence, endOfBatch) ->
-                        markers.add(event.marker == null ? NULL_MARKER : event.marker));
+            .singleProducer(ResidueEvent.FACTORY)
+            .name("reusable-event-clear")
+            .size(16)
+            .buildWith((event, sequence, endOfBatch) ->
+                markers.add(event.marker == null ? NULL_MARKER : event.marker));
 
         try {
             eventbus.publish((event, sequence) -> {

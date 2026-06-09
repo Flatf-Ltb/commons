@@ -40,7 +40,7 @@ public final class EventHandlerWrapper<E extends ReusableEvent> implements Event
         } catch (Exception e) {
             EventExceptionContext context = EventExceptionContext.event(eventbusName, e, sequence, event);
             log.error("EventHandler process event -> {}, sequence==[{}], endOfBatch==[{}], Processor -> {}, Throw exception -> [{}]",
-                context.getEventSnapshot(), sequence, endOfBatch, processor.getClass().getSimpleName(),
+                context.eventSnapshot(), sequence, endOfBatch, processor.getClass().getSimpleName(),
                 e.getMessage(), e);
             if (crashOnFailure)
                 throw e;
@@ -55,7 +55,7 @@ public final class EventHandlerWrapper<E extends ReusableEvent> implements Event
             exceptionHandler.onException(context);
         } catch (Throwable throwable) {
             log.error("EventHandler exception callback failed -> stage==[{}], message==[{}]",
-                context.getStage(), throwable.getMessage(), throwable);
+                context.stage(), throwable.getMessage(), throwable);
         }
     }
 

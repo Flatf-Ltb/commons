@@ -14,8 +14,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.locks.LockSupport;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
 @RunWith(Parameterized.class)
 public class BatchingTest {
+
     private final ProducerType producerType;
 
     public BatchingTest(ProducerType producerType) {
@@ -65,7 +68,7 @@ public class BatchingTest {
     @Test
     public void shouldBatch() throws Exception {
         Disruptor<LongEvent> d = new Disruptor<>(LongEvent.FACTORY, 2048, DaemonThreadFactory.INSTANCE,
-                producerType, new SleepingWaitStrategy());
+            producerType, new SleepingWaitStrategy());
 
         ParallelEventHandler handler1 = new ParallelEventHandler(1, 0);
         ParallelEventHandler handler2 = new ParallelEventHandler(1, 1);
@@ -85,9 +88,9 @@ public class BatchingTest {
             Thread.sleep(1);
         }
 
-        org.hamcrest.MatcherAssert.assertThat(handler1.publishedValue, CoreMatchers.is((long) eventCount - 2));
-        org.hamcrest.MatcherAssert.assertThat(handler1.eventCount, CoreMatchers.is((long) eventCount / 2));
-        org.hamcrest.MatcherAssert.assertThat(handler2.publishedValue, CoreMatchers.is((long) eventCount - 1));
-        org.hamcrest.MatcherAssert.assertThat(handler2.eventCount, CoreMatchers.is((long) eventCount / 2));
+        assertThat(handler1.publishedValue, CoreMatchers.is((long) eventCount - 2));
+        assertThat(handler1.eventCount, CoreMatchers.is((long) eventCount / 2));
+        assertThat(handler2.publishedValue, CoreMatchers.is((long) eventCount - 1));
+        assertThat(handler2.eventCount, CoreMatchers.is((long) eventCount / 2));
     }
 }

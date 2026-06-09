@@ -21,12 +21,12 @@ public class RingEventbusExceptionCallbackTest {
         BlockingQueue<EventExceptionContext> contexts = new LinkedBlockingQueue<>();
         IllegalStateException failure = new IllegalStateException("handler failed");
         RingEventbus<ReusableLongEvent> eventbus = RingEventbus
-                .singleProducer(ReusableLongEvent.FACTORY)
-                .name("exception-callback")
-                .whenException(contexts::add)
-                .buildWith((event, sequence, endOfBatch) -> {
-                    throw failure;
-                });
+            .singleProducer(ReusableLongEvent.FACTORY)
+            .name("exception-callback")
+            .whenException(contexts::add)
+            .buildWith((event, sequence, endOfBatch) -> {
+                throw failure;
+            });
 
         try {
             eventbus.publish((event, sequence) -> event.set(10L));
@@ -34,12 +34,12 @@ public class RingEventbusExceptionCallbackTest {
             EventExceptionContext context = contexts.poll(5, TimeUnit.SECONDS);
             assertNotNull(context);
             assertTrue(EventExceptionContext.class.isRecord());
-            assertEquals("exception-callback", context.getEventbusName());
-            assertEquals(EventExceptionStage.EVENT, context.getStage());
-            assertEquals(0L, context.getSequence());
-            assertSame(failure, context.getException());
-            assertEquals(ReusableLongEvent.class.getName(), context.getEventType());
-            assertEquals("ReusableLongEvent{value=10}", context.getEventSnapshot());
+            assertEquals("exception-callback", context.eventbusName());
+            assertEquals(EventExceptionStage.EVENT, context.stage());
+            assertEquals(0L, context.sequence());
+            assertSame(failure, context.exception());
+            assertEquals(ReusableLongEvent.class.getName(), context.eventType());
+            assertEquals("ReusableLongEvent{value=10}", context.eventSnapshot());
         } finally {
             eventbus.stop();
         }
@@ -49,12 +49,12 @@ public class RingEventbusExceptionCallbackTest {
     public void capturesReusableEventSnapshotInsteadOfToString() throws Exception {
         BlockingQueue<EventExceptionContext> contexts = new LinkedBlockingQueue<>();
         RingEventbus<SnapshotEvent> eventbus = RingEventbus
-                .singleProducer(SnapshotEvent.FACTORY)
-                .name("snapshot-callback")
-                .whenException(contexts::add)
-                .buildWith((event, sequence, endOfBatch) -> {
-                    throw new IllegalStateException("snapshot expected");
-                });
+            .singleProducer(SnapshotEvent.FACTORY)
+            .name("snapshot-callback")
+            .whenException(contexts::add)
+            .buildWith((event, sequence, endOfBatch) -> {
+                throw new IllegalStateException("snapshot expected");
+            });
 
         try {
             eventbus.publish((event, sequence) -> event.value = 20L);

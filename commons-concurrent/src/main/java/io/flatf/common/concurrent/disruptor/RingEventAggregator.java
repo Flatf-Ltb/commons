@@ -86,7 +86,7 @@ public abstract class RingEventAggregator<E extends ReusableEvent> implements Ev
             return this;
         }
 
-        public Builder<E> onException(EventExceptionCallback exceptionCallback) {
+        public Builder<E> whenException(EventExceptionCallback exceptionCallback) {
             this.exceptionCallback = exceptionCallback;
             return this;
         }

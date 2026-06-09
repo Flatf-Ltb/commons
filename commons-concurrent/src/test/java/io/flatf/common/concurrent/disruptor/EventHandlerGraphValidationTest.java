@@ -18,15 +18,15 @@ public class EventHandlerGraphValidationTest {
     @Test(expected = IllegalArgumentException.class)
     public void rejectsEmptyPipelineStage() {
         EventHandlerGraph
-                .with(noopHandler())
-                .then();
+            .with(noopHandler())
+            .then();
     }
 
     @Test(expected = NullPointerException.class)
     public void rejectsNullPipelineHandler() {
         EventHandlerGraph
-                .with(noopHandler())
-                .then((EventHandler<ReusableLongEvent>) null);
+            .with(noopHandler())
+            .then((EventHandler<ReusableLongEvent>) null);
     }
 
     private static EventHandler<ReusableLongEvent> noopHandler() {

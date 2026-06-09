@@ -20,19 +20,19 @@ public class RingEventAggregatorSafetyOptionsTest {
         BlockingQueue<EventExceptionContext> contexts = new LinkedBlockingQueue<>();
         IllegalStateException failure = new IllegalStateException("aggregator failed");
         ThrowingAggregator aggregator = new ThrowingAggregator(
-                RingEventAggregator.<ReusableLongEvent>singleProducer()
-                        .name("aggregator-exception")
-                        .onException(contexts::add),
-                failure);
+            RingEventAggregator.<ReusableLongEvent>singleProducer()
+                .name("aggregator-exception")
+                .whenException(contexts::add),
+            failure);
 
         try {
             aggregator.publish(7L);
 
             EventExceptionContext context = contexts.poll(5, TimeUnit.SECONDS);
             assertNotNull(context);
-            assertEquals("aggregator-exception", context.getEventbusName());
-            assertSame(failure, context.getException());
-            assertEquals("ReusableLongEvent{value=7}", context.getEventSnapshot());
+            assertEquals("aggregator-exception", context.eventbusName());
+            assertSame(failure, context.exception());
+            assertEquals("ReusableLongEvent{value=7}", context.eventSnapshot());
         } finally {
             aggregator.stop();
         }
@@ -41,9 +41,9 @@ public class RingEventAggregatorSafetyOptionsTest {
     @Test
     public void aggregatorBuilderPassesSingleProducerVerificationToEventbus() throws Exception {
         CapturingAggregator aggregator = new CapturingAggregator(
-                RingEventAggregator.<ReusableLongEvent>singleProducer()
-                        .name("aggregator-single-producer")
-                        .verifySingleProducer());
+            RingEventAggregator.<ReusableLongEvent>singleProducer()
+                .name("aggregator-single-producer")
+                .verifySingleProducer());
 
         try {
             aggregator.publish(1L);

@@ -8,71 +8,71 @@ import org.junit.Test;
  */
 public class FixedStackTest {
 
-	@Test
-	public void testCreate() {
-		FixedStack<Integer> intStack = new FixedStack<>(10);
+    @Test
+    public void testCreate() {
+        FixedStack<Integer> intStack = new FixedStack<>(10);
 
-		Assert.assertTrue(intStack.isEmpty());
+        Assert.assertTrue(intStack.isEmpty());
 
-		for (int i = 0; i < 10; i++) {
-			intStack.push(i);
-		}
+        for (int i = 0; i < 10; i++) {
+            intStack.push(i);
+        }
 
-		Assert.assertFalse(intStack.isEmpty());
+        Assert.assertFalse(intStack.isEmpty());
 
-		Assert.assertEquals(10, intStack.size());
+        Assert.assertEquals(10, intStack.size());
 
-		for (int i = 9; i >= 0; i--) {
-			Assert.assertEquals(intStack.pop(), Integer.valueOf(i));
-		}
-	}
+        for (int i = 9; i >= 0; i--) {
+            Assert.assertEquals(intStack.pop(), Integer.valueOf(i));
+        }
+    }
 
-	@Test
-	public void testPush() {
-		FixedStack<Integer> intStack = new FixedStack<>(16);
-		// okay to add more than 10
-		for (int i = 0; i < 16; i++) {
-			intStack.push(i);
-		}
+    @Test
+    public void testPush() {
+        FixedStack<Integer> intStack = new FixedStack<>(16);
+        // okay to add more than 10
+        for (int i = 0; i < 16; i++) {
+            intStack.push(i);
+        }
 
-		for (int i = 0; i < 5; i++) {
-			Assert.assertFalse(intStack.push(i));
-		}
+        for (int i = 0; i < 5; i++) {
+            Assert.assertFalse(intStack.push(i));
+        }
 
-		// but they are not on the stack -
-		for (int i = 15; i >= 0; i--) {
-			Assert.assertEquals(Integer.valueOf(i), intStack.pop());
-		}
-	}
+        // but they are not on the stack -
+        for (int i = 15; i >= 0; i--) {
+            Assert.assertEquals(Integer.valueOf(i), intStack.pop());
+        }
+    }
 
-	@Test
-	public void testPeek() {
-		FixedStack<Integer> intStack = new FixedStack<>(1024);
-		for (int i = 0; i < 1024; i++) {
-			intStack.push(i);
-		}
-		// confirm peek matches what we expect
-		for (int i = 1023; i >= 0; i--) {
-			Assert.assertEquals(intStack.peek(), Integer.valueOf(i));
-			Assert.assertEquals(intStack.pop(), Integer.valueOf(i));
-		}
-	}
+    @Test
+    public void testPeek() {
+        FixedStack<Integer> intStack = new FixedStack<>(1024);
+        for (int i = 0; i < 1024; i++) {
+            intStack.push(i);
+        }
+        // confirm peek matches what we expect
+        for (int i = 1023; i >= 0; i--) {
+            Assert.assertEquals(intStack.peek(), Integer.valueOf(i));
+            Assert.assertEquals(intStack.pop(), Integer.valueOf(i));
+        }
+    }
 
-	@Test
-	public void testClear() {
-		FixedStack<Integer> intStack = new FixedStack<>(20);
-		for (int i = 0; i < 20; i++) {
-			intStack.push(i);
-		}
+    @Test
+    public void testClear() {
+        FixedStack<Integer> intStack = new FixedStack<>(20);
+        for (int i = 0; i < 20; i++) {
+            intStack.push(i);
+        }
 
-		Assert.assertFalse(intStack.isEmpty());
-		intStack.clear();
-		Assert.assertTrue(intStack.isEmpty());
-		for (int i = 0; i < 20; i++) {
-			intStack.push(i);
-		}
-		for (int i = 19; i >= 0; i--) {
-			Assert.assertEquals(intStack.pop(), Integer.valueOf(i));
-		}
-	}
+        Assert.assertFalse(intStack.isEmpty());
+        intStack.clear();
+        Assert.assertTrue(intStack.isEmpty());
+        for (int i = 0; i < 20; i++) {
+            intStack.push(i);
+        }
+        for (int i = 19; i >= 0; i--) {
+            Assert.assertEquals(intStack.pop(), Integer.valueOf(i));
+        }
+    }
 }

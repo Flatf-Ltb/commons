@@ -19,7 +19,7 @@ public class EventHandlerWrapperTest {
         EventHandlerWrapper<ReusableLongEvent> wrapper = EventHandlerWrapper
                 .<ReusableLongEvent>builder()
                 .whenException(contexts::add)
-                .build(event -> {
+                .build(_ -> {
                     throw failure;
                 });
 
@@ -29,11 +29,11 @@ public class EventHandlerWrapperTest {
         wrapper.onEvent(event, 9L, true);
 
         EventExceptionContext context = contexts.take();
-        assertEquals("EventHandlerWrapper", context.getEventbusName());
-        assertEquals(EventExceptionStage.EVENT, context.getStage());
-        assertEquals(9L, context.getSequence());
-        assertEquals(ReusableLongEvent.class.getName(), context.getEventType());
-        assertEquals("ReusableLongEvent{value=42}", context.getEventSnapshot());
-        assertSame(failure, context.getException());
+        assertEquals("EventHandlerWrapper", context.eventbusName());
+        assertEquals(EventExceptionStage.EVENT, context.stage());
+        assertEquals(9L, context.sequence());
+        assertEquals(ReusableLongEvent.class.getName(), context.eventType());
+        assertEquals("ReusableLongEvent{value=42}", context.eventSnapshot());
+        assertSame(failure, context.exception());
     }
 }
