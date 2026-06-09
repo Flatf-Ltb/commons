@@ -1,54 +1,66 @@
 package io.flatf.common.concurrent.disruptor;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import static java.util.Objects.requireNonNull;
 
 /**
  * Callback invoked when RingEventbus processing or lifecycle handling fails.
- *
- * @param <E> event type
  */
 @FunctionalInterface
-public interface EventExceptionCallback<E extends ReusableEvent> {
+public interface EventExceptionCallback {
 
-    void onException(EventExceptionContext<E> context);
+    void onException(EventExceptionContext context);
 
     /**
      * Exception context exposed by RingEventbus without leaking the Disruptor exception API.
-     *
-     * @param <E> event type
      */
-    final class EventExceptionContext<E extends ReusableEvent> {
+    record EventExceptionContext(
+        @Nonnull String eventbusName,
+        @Nonnull EventExceptionStage stage,
+        long sequence,
+        @Nullable String eventType,
+        @Nullable String eventSnapshot,
+        @Nonnull Throwable exception) {
 
         private static final long NO_SEQUENCE = -1L;
 
-        private final String eventbusName;
-        private final EventExceptionStage stage;
-        private final long sequence;
-        private final E event;
-        private final Throwable exception;
-
-        private EventExceptionContext(String eventbusName, EventExceptionStage stage,
-                                      long sequence, E event, Throwable exception) {
-            this.eventbusName = eventbusName;
-            this.stage = requireNonNull(stage, "stage");
-            this.sequence = sequence;
-            this.event = event;
-            this.exception = requireNonNull(exception, "exception");
+        public EventExceptionContext {
+            requireNonNull(eventbusName, "eventbusName");
+            requireNonNull(stage, "stage");
+            requireNonNull(exception, "exception");
         }
 
-        public static <E extends ReusableEvent> EventExceptionContext<E> event(
+        public static <E extends ReusableEvent> EventExceptionContext event(
             String eventbusName, Throwable exception, long sequence, E event) {
-            return new EventExceptionContext<>(eventbusName, EventExceptionStage.EVENT, sequence, event, exception);
+            return new EventExceptionContext(
+                eventbusName, EventExceptionStage.EVENT, sequence,
+                event == null ? null : event.getClass().getName(),
+                eventSnapshot(event), exception);
         }
 
-        public static <E extends ReusableEvent> EventExceptionContext<E> start(
-            String eventbusName, Throwable exception) {
-            return new EventExceptionContext<>(eventbusName, EventExceptionStage.START, NO_SEQUENCE, null, exception);
+        public static EventExceptionContext start(String eventbusName,
+                                                  Throwable exception) {
+            return new EventExceptionContext(eventbusName, EventExceptionStage.START,
+                NO_SEQUENCE, null, null, exception);
         }
 
-        public static <E extends ReusableEvent> EventExceptionContext<E> shutdown(
-            String eventbusName, Throwable exception) {
-            return new EventExceptionContext<>(eventbusName, EventExceptionStage.SHUTDOWN, NO_SEQUENCE, null, exception);
+        public static EventExceptionContext shutdown(String eventbusName,
+                                                     Throwable exception) {
+            return new EventExceptionContext(eventbusName, EventExceptionStage.SHUTDOWN,
+                NO_SEQUENCE, null, null, exception);
+        }
+
+        private static <E extends ReusableEvent> String eventSnapshot(E event) {
+            if (event == null)
+                return null;
+            try {
+                return event.snapshot();
+            } catch (Throwable throwable) {
+                return "<event snapshot failed: " + throwable.getClass().getName() + ": "
+                       + throwable.getMessage() + ">";
+            }
         }
 
         public String getEventbusName() {
@@ -63,8 +75,12 @@ public interface EventExceptionCallback<E extends ReusableEvent> {
             return sequence;
         }
 
-        public E getEvent() {
-            return event;
+        public String getEventType() {
+            return eventType;
+        }
+
+        public String getEventSnapshot() {
+            return eventSnapshot;
         }
 
         public Throwable getException() {

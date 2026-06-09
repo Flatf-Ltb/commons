@@ -1,4 +1,4 @@
-package io.flatf.common.concurrent.disruptor.base;
+package io.flatf.common.concurrent.disruptor;
 
 import com.lmax.disruptor.EventFactory;
 import io.flatf.common.util.JreReflection;

@@ -1,6 +1,6 @@
 package io.flatf.common.concurrent.disruptor;
 
-import io.flatf.common.concurrent.disruptor.base.EventPublisher.EventPublisherArg1;
+import io.flatf.common.concurrent.disruptor.EventPublisher.EventPublisherArg1;
 import org.junit.Test;
 
 import java.util.concurrent.FutureTask;
@@ -16,7 +16,7 @@ public class RingEventbusSingleProducerVerificationTest {
                 .singleProducer(ReusableLongEvent.FACTORY)
                 .name("single-producer-direct-verification")
                 .verifySingleProducer()
-                .withHandler((event, sequence, endOfBatch) -> {
+                .buildWith((event, sequence, endOfBatch) -> {
                 });
 
         try {
@@ -37,7 +37,7 @@ public class RingEventbusSingleProducerVerificationTest {
             RingEventbus<ReusableLongEvent> eventbus = RingEventbus
                     .singleProducer(ReusableLongEvent.FACTORY)
                     .name("single-producer-system-property-verification")
-                    .withHandler((event, sequence, endOfBatch) -> {
+                    .buildWith((event, sequence, endOfBatch) -> {
                     });
 
             try {
@@ -59,7 +59,7 @@ public class RingEventbusSingleProducerVerificationTest {
                 .singleProducer(ReusableLongEvent.FACTORY)
                 .name("single-producer-publisher-verification")
                 .verifySingleProducer()
-                .withHandler((event, sequence, endOfBatch) -> {
+                .buildWith((event, sequence, endOfBatch) -> {
                 });
         EventPublisherArg1<ReusableLongEvent, Long> publisher =
                 eventbus.newPublisher((event, sequence, value) -> event.set(value));
@@ -82,7 +82,7 @@ public class RingEventbusSingleProducerVerificationTest {
                 .multiProducer(ReusableLongEvent.FACTORY)
                 .name("multi-producer-with-verification")
                 .verifySingleProducer()
-                .withHandler((event, sequence, endOfBatch) -> {
+                .buildWith((event, sequence, endOfBatch) -> {
                 });
 
         try {

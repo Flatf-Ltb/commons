@@ -12,22 +12,23 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import static io.flatf.common.collections.MutableLists.newFastList;
+import static java.util.Objects.requireNonNull;
 
 /**
  * [事件处理器] GRAPH
  *
  * @param <E> 事件类型
  */
-public final class HandlerGraph<E extends ReusableEvent> {
+public final class EventHandlerGraph<E extends ReusableEvent> {
 
-    private static final Logger log = Log4j2LoggerFactory.getLogger(HandlerGraph.class);
-
-    private final EventExceptionCallback<E> exceptionCallback;
+    private static final Logger log = Log4j2LoggerFactory.getLogger(EventHandlerGraph.class);
 
     private final MutableList<EventHandler<E>[]> handlersList;
 
-    private HandlerGraph(@Nonnull MutableList<EventHandler<E>[]> handlersList,
-                         @Nullable EventExceptionCallback<E> exceptionCallback) {
+    private final EventExceptionCallback exceptionCallback;
+
+    private EventHandlerGraph(@Nonnull MutableList<EventHandler<E>[]> handlersList,
+                              @Nullable EventExceptionCallback exceptionCallback) {
         this.handlersList = handlersList;
         this.exceptionCallback = exceptionCallback;
     }
@@ -40,13 +41,14 @@ public final class HandlerGraph<E extends ReusableEvent> {
      */
     private record ExceptionHandleProxy<E extends ReusableEvent>(
         String eventbusName,
-        EventExceptionCallback<E> callback) implements ExceptionHandler<E> {
+        EventExceptionCallback callback) implements ExceptionHandler<E> {
 
         @Override
         public void handleEventException(Throwable ex, long sequence, E event) {
+            EventExceptionContext context = EventExceptionContext.event(eventbusName, ex, sequence, event);
             log.error("{} handleEventException -> sequence==[{}], event==[{}], exception message==[{}]",
-                eventbusName, sequence, event, ex.getMessage(), ex);
-            notifyCallback(EventExceptionContext.event(eventbusName, ex, sequence, event));
+                eventbusName, sequence, context.getEventSnapshot(), ex.getMessage(), ex);
+            notifyCallback(context);
         }
 
         @Override
@@ -61,7 +63,7 @@ public final class HandlerGraph<E extends ReusableEvent> {
             notifyCallback(EventExceptionContext.shutdown(eventbusName, ex));
         }
 
-        private void notifyCallback(EventExceptionContext<E> context) {
+        private void notifyCallback(EventExceptionContext context) {
             if (callback == null)
                 return;
             try {
@@ -91,42 +93,47 @@ public final class HandlerGraph<E extends ReusableEvent> {
     }
 
     @SafeVarargs
-    public static <E extends ReusableEvent> HandlerGraphWizard<E> with(@Nonnull EventHandler<E>... handlers) {
-        return new HandlerGraphWizard<E>().then(handlers);
+    public static <E extends ReusableEvent> Builder<E> with(@Nonnull EventHandler<E>... handlers) {
+        return new Builder<E>().then(handlers);
+    }
+
+    private static <E extends ReusableEvent> EventHandler<E>[] requireHandlers(EventHandler<E>[] handlers) {
+        if (handlers == null || handlers.length == 0)
+            throw new IllegalArgumentException("handlers must not be empty");
+        for (int i = 0; i < handlers.length; i++)
+            requireNonNull(handlers[i], "handlers[" + i + "]");
+        return handlers;
     }
 
     /**
      * [事件处理器] GRAPH构建器
      * @param <E> Event type
      */
-    public static class HandlerGraphWizard<E extends ReusableEvent> {
+    public static class Builder<E extends ReusableEvent> {
 
-        private EventExceptionCallback<E> exceptionCallback;
+        private EventExceptionCallback exceptionCallback;
         private final MutableList<EventHandler<E>[]> eventHandlers = newFastList();
 
-        private HandlerGraphWizard() {
+        private Builder() {
         }
 
         @SafeVarargs
-        public final HandlerGraphWizard<E> then(EventHandler<E>... handlers) {
-            this.eventHandlers.add(handlers);
+        public final Builder<E> then(EventHandler<E>... handlers) {
+            this.eventHandlers.add(requireHandlers(handlers));
             return this;
         }
 
-        public HandlerGraphWizard<E> onException(EventExceptionCallback<E> exceptionCallback) {
+        public Builder<E> whenException(EventExceptionCallback exceptionCallback) {
             this.exceptionCallback = exceptionCallback;
             return this;
         }
 
-        public HandlerGraph<E> build() {
-            return new HandlerGraph<>(eventHandlers, exceptionCallback);
+        public EventHandlerGraph<E> build() {
+            if (eventHandlers.isEmpty())
+                throw new IllegalArgumentException("handler graph must contain at least one handler stage");
+            return new EventHandlerGraph<>(eventHandlers, exceptionCallback);
         }
 
     }
-
-    HandlerGraph<E> withExceptionCallback(EventExceptionCallback<E> callback) {
-        return new HandlerGraph<>(handlersList, callback);
-    }
-
 
 }

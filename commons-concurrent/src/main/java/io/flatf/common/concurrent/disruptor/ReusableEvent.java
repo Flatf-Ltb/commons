@@ -13,4 +13,14 @@ public interface ReusableEvent {
      */
     void clear();
 
+    /**
+     * Return a stable diagnostic snapshot of the current event state.
+     *
+     * <p>The returned string must describe the event state at call time and must not expose mutable
+     * event objects to asynchronous error callbacks.</p>
+     *
+     * @return Current event snapshot
+     */
+    String snapshot();
+
 }

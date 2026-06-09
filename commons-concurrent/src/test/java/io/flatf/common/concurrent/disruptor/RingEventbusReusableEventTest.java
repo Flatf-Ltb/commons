@@ -21,7 +21,7 @@ public class RingEventbusReusableEventTest {
                 .singleProducer(ResidueEvent.FACTORY)
                 .name("reusable-event-clear")
                 .size(16)
-                .withHandler((event, sequence, endOfBatch) ->
+                .buildWith((event, sequence, endOfBatch) ->
                         markers.add(event.marker == null ? NULL_MARKER : event.marker));
 
         try {
@@ -49,6 +49,11 @@ public class RingEventbusReusableEventTest {
         public void clear() {
             this.value = -1L;
             this.marker = null;
+        }
+
+        @Override
+        public String snapshot() {
+            return "ResidueEvent{value=" + value + ", marker=" + marker + "}";
         }
     }
 }

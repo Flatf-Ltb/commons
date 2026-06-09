@@ -19,7 +19,7 @@ public class RingProcessChainTest {
         RingEventbus<ReusableLongEvent> pipeline = RingEventbus
                 .singleProducer(ReusableLongEvent.FACTORY).
                 name("Test-RingProcessChain").size(32).waitStrategy(YIELDING.getInstance())
-                .withPipeline(
+                .buildPipelineWith(
                         (event, sequence, endOfBatch) -> {
                             System.out.println("sequence -> " + sequence + " p0 - " + event.get() + " : " + endOfBatch);
                             p0.increment();

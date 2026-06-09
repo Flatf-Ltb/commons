@@ -21,4 +21,14 @@ final class ReusableLongEvent implements ReusableEvent {
         this.value = -1L;
     }
 
+    @Override
+    public String snapshot() {
+        return "ReusableLongEvent{value=" + value + "}";
+    }
+
+    @Override
+    public String toString() {
+        return snapshot();
+    }
+
 }

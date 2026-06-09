@@ -1,10 +1,9 @@
-package io.flatf.common.concurrent.disruptor.base;
+package io.flatf.common.concurrent.disruptor;
 
 import com.lmax.disruptor.EventTranslatorOneArg;
 import com.lmax.disruptor.EventTranslatorThreeArg;
 import com.lmax.disruptor.EventTranslatorTwoArg;
 import com.lmax.disruptor.RingBuffer;
-import io.flatf.common.concurrent.disruptor.ReusableEvent;
 import jakarta.annotation.Nonnull;
 
 import static java.util.Objects.requireNonNull;
@@ -86,11 +85,6 @@ public final class EventPublisher {
         private final EventTranslatorOneArg<E, A> translator;
         private final Runnable beforePublish;
 
-        public EventPublisherArg1(@Nonnull RingBuffer<E> buffer,
-                                  @Nonnull EventTranslatorOneArg<E, A> translator) {
-            this(buffer, translator, NOOP);
-        }
-
         private EventPublisherArg1(@Nonnull RingBuffer<E> buffer,
                                    @Nonnull EventTranslatorOneArg<E, A> translator,
                                    @Nonnull Runnable beforePublish) {
@@ -161,11 +155,6 @@ public final class EventPublisher {
 
         private final EventTranslatorThreeArg<E, A0, A1, A2> translator;
         private final Runnable beforePublish;
-
-        public EventPublisherArg3(@Nonnull RingBuffer<E> buffer,
-                                  @Nonnull EventTranslatorThreeArg<E, A0, A1, A2> translator) {
-            this(buffer, translator, NOOP);
-        }
 
         private EventPublisherArg3(@Nonnull RingBuffer<E> buffer,
                                    @Nonnull EventTranslatorThreeArg<E, A0, A1, A2> translator,

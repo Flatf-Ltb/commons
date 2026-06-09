@@ -1,6 +1,6 @@
 package io.flatf.common.concurrent.disruptor;
 
-import io.flatf.common.concurrent.disruptor.base.EventPublisher.EventPublisherArg1;
+import io.flatf.common.concurrent.disruptor.EventPublisher.EventPublisherArg1;
 import io.flatf.common.thread.Sleep;
 import io.flatf.common.thread.Threads;
 import org.junit.Test;
@@ -20,7 +20,7 @@ public class RingMulticasterTest {
         RingEventbus<ReusableLongEvent> multicaster = RingEventbus
                 .singleProducer(ReusableLongEvent.FACTORY)
                 .name("Test-Multicaster").waitStrategy(YIELDING.getInstance()).size(32)
-                .withBroadcast((event, sequence, endOfBatch) -> {
+                .buildBroadcastWith((event, sequence, endOfBatch) -> {
                     System.out.println("sequence -> " + sequence + " p0 - " + event.get() + " : " + endOfBatch);
                     p0.increment();
                 }, (event, sequence, endOfBatch) -> {
