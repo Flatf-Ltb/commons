@@ -1,0 +1,101 @@
+/**
+ * The MIT License (MIT)
+ * <p>
+ * Copyright (c) 2018-2022 nobark (tools4j), Marco Terzer, Anton Anufriev
+ * <p>
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * <p>
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * <p>
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+package io.flatf.common.concurrent.nobark.run;
+
+import jdk.internal.vm.annotation.Contended;
+
+import java.util.Objects;
+import java.util.concurrent.ThreadFactory;
+
+/**
+ * A thread that performs a {@link Runnable runnable} in a new thread.
+ * The thread is started immediately upon construction and it can be stopped via stop or auto-close method.
+ */
+public class StoppableThread implements ThreadLike {
+
+    private final RunnableFactory runnableFactory;
+    private final Thread thread;
+
+    @Contended
+    private volatile boolean running;
+
+    /**
+     * Constructor for stoppable thread; it is recommended to use the static start(..) methods instead.
+     *
+     * @param runnableFactory   the factory for the runnable;
+     *                          the <i>{@link #keepRunning}</i> condition is passed to the factory as lambda
+     * @param threadFactory     the factory to provide the thread
+     */
+    protected StoppableThread(final RunnableFactory runnableFactory, final ThreadFactory threadFactory) {
+        this.thread = threadFactory.newThread(this::run);
+        this.runnableFactory = Objects.requireNonNull(runnableFactory);
+        this.running = true;
+        thread.start();
+    }
+
+    /**
+     * Creates, starts and returns a new shutdownable thread.
+     *
+     * @param runnableFactory   the factory for the runnable;
+     *                          the <i>{@link #keepRunning}</i> condition is passed to the factory as lambda
+     * @param threadFactory     the factory to provide the thread
+     * @return the newly created and started stoppable thread
+     */
+    public static StoppableThread start(final RunnableFactory runnableFactory, final ThreadFactory threadFactory) {
+        return new StoppableThread(runnableFactory, threadFactory);
+    }
+
+    private void run() {
+        final Runnable runnable = runnableFactory.create(this::keepRunning);
+        runnable.run();
+    }
+
+    private boolean keepRunning() {
+        return running;
+    }
+
+    @Override
+    public Thread.State threadState() {
+        return thread.getState();
+    }
+
+    @Override
+    public void stop() {
+        running = false;
+    }
+
+    @Override
+    public void join(final long millis) {
+        try {
+            thread.join(millis);
+        } catch (final InterruptedException e) {
+            throw new IllegalStateException("Join interrupted for thread " + thread);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return thread.getName();
+    }
+}
