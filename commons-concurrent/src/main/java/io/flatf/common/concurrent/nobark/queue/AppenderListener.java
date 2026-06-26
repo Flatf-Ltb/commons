@@ -74,7 +74,7 @@ public interface AppenderListener<K, V> {
     /**
      * Constant for a no-op listener.
      */
-    AppenderListener<Object, Object> NOOP = (_, _, _, _, _) -> {
+    AppenderListener<Object, Object> NOOP = (queue, key, newValue, oldValue, conflation) -> {
     };
 
     /**

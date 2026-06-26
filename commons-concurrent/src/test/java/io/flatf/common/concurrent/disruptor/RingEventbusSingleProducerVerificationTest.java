@@ -16,7 +16,7 @@ public class RingEventbusSingleProducerVerificationTest {
         RingEventbus<ReusableLongEvent> eventbus = RingEventbus
             .singleProducer(ReusableLongEvent.FACTORY)
             .name("single-producer-direct-verification")
-            .verifySingleProducer()
+            .assertSingleProducer()
             .buildWith((event, sequence, endOfBatch) -> {
             });
 
@@ -34,7 +34,7 @@ public class RingEventbusSingleProducerVerificationTest {
 
     @Test
     public void systemPropertyEnablesSingleProducerVerification() throws Exception {
-        withProperty(RingEventbus.VERIFY_SINGLE_PRODUCER_PROPERTY, "true", () -> {
+        withProperty(RingEventbus.ASSERT_SINGLE_PRODUCER_PROPERTY, "true", () -> {
             RingEventbus<ReusableLongEvent> eventbus = RingEventbus
                 .singleProducer(ReusableLongEvent.FACTORY)
                 .name("single-producer-system-property-verification")
@@ -59,7 +59,7 @@ public class RingEventbusSingleProducerVerificationTest {
         RingEventbus<ReusableLongEvent> eventbus = RingEventbus
             .singleProducer(ReusableLongEvent.FACTORY)
             .name("single-producer-publisher-verification")
-            .verifySingleProducer()
+            .assertSingleProducer()
             .buildWith((event, sequence, endOfBatch) -> {
             });
         EventPublisherArg1<ReusableLongEvent, Long> publisher =
@@ -82,7 +82,7 @@ public class RingEventbusSingleProducerVerificationTest {
         RingEventbus<ReusableLongEvent> eventbus = RingEventbus
             .multiProducer(ReusableLongEvent.FACTORY)
             .name("multi-producer-with-verification")
-            .verifySingleProducer()
+            .assertSingleProducer()
             .buildWith((event, sequence, endOfBatch) -> {
             });
 

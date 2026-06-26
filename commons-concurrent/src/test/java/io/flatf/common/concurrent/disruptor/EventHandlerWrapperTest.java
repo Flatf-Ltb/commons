@@ -19,7 +19,7 @@ public class EventHandlerWrapperTest {
         EventHandlerWrapper<ReusableLongEvent> wrapper = EventHandlerWrapper
                 .<ReusableLongEvent>builder()
                 .whenException(contexts::add)
-                .build(_ -> {
+                .build(ignored -> {
                     throw failure;
                 });
 

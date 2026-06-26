@@ -73,7 +73,7 @@ public interface StepProvider {
      */
     static StepProvider alwaysProvide(final Step step) {
         Objects.requireNonNull(step);
-        return _ -> step;
+        return forShutdown -> step;
     }
 
     /**

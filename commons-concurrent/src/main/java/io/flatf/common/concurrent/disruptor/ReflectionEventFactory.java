@@ -31,9 +31,9 @@ public final class ReflectionEventFactory<T> implements EventFactory<T> {
      * @return ReflectionEventFactory<T>
      * @throws RuntimeReflectionException re
      */
-    public static <T> ReflectionEventFactory<T> newFactory(@Nonnull Class<T> type)
-            throws RuntimeReflectionException {
-        return newFactory(type, null);
+    public static <T> ReflectionEventFactory<T> newReflectionFactory(@Nonnull Class<T> type)
+        throws RuntimeReflectionException {
+        return newReflectionFactory(type, null);
     }
 
     /**
@@ -42,8 +42,8 @@ public final class ReflectionEventFactory<T> implements EventFactory<T> {
      * @return ReflectionEventFactory<T>
      * @throws RuntimeReflectionException re
      */
-    public static <T> ReflectionEventFactory<T> newFactory(@Nonnull Class<T> type, Logger log)
-            throws RuntimeReflectionException {
+    public static <T> ReflectionEventFactory<T> newReflectionFactory(@Nonnull Class<T> type, Logger log)
+        throws RuntimeReflectionException {
         nonNull(type, "type");
         ReflectionEventFactory<T> factory = new ReflectionEventFactory<>(type);
         try {

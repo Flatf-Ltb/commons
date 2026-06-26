@@ -79,7 +79,7 @@ public interface ExchangeConflationQueue<K, V> extends ConflationQueue<K, V> {
          * @return the polled value, or null if the queue was empty
          */
         default V poll(final V exchange) {
-            return poll((_, _) -> {
+            return poll((key, value) -> {
             }, exchange);
         }
 

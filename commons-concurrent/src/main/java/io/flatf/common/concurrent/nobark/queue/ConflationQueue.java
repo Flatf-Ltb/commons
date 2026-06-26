@@ -113,7 +113,7 @@ public interface ConflationQueue<K, V> {
          * @return the polled value, or null if the queue was empty
          */
         default V poll() {
-            return poll((_, _) -> {
+            return poll((key, value) -> {
             });
         }
     }

@@ -24,8 +24,8 @@ public abstract class RingEventAggregator<E extends ReusableEvent> implements Ev
             .waitStrategy(builder.waitStrategy);
         if (builder.startMode != null)
             eventbusBuilder.startMode(builder.startMode);
-        if (builder.verifySingleProducer != null)
-            eventbusBuilder.verifySingleProducer(builder.verifySingleProducer);
+        if (builder.assertSingleProducer != null)
+            eventbusBuilder.assertSingleProducer(builder.assertSingleProducer);
         if (builder.exceptionCallback != null)
             eventbusBuilder.whenException(builder.exceptionCallback);
         this.eventbus = eventbusBuilder.buildWith(this);
@@ -50,7 +50,7 @@ public abstract class RingEventAggregator<E extends ReusableEvent> implements Ev
         private int size = 128;
         private WaitStrategy waitStrategy = SimpleWaitStrategy.YIELDING.getInstance();
         private StartMode startMode;
-        private Boolean verifySingleProducer;
+        private Boolean assertSingleProducer;
         private EventExceptionCallback exceptionCallback;
 
         private Builder(boolean isSingleProducer) {
@@ -77,12 +77,12 @@ public abstract class RingEventAggregator<E extends ReusableEvent> implements Ev
             return this;
         }
 
-        public Builder<E> verifySingleProducer() {
-            return verifySingleProducer(true);
+        public Builder<E> assertSingleProducer() {
+            return assertSingleProducer(true);
         }
 
-        public Builder<E> verifySingleProducer(boolean verifySingleProducer) {
-            this.verifySingleProducer = verifySingleProducer;
+        public Builder<E> assertSingleProducer(boolean assertSingleProducer) {
+            this.assertSingleProducer = assertSingleProducer;
             return this;
         }
 

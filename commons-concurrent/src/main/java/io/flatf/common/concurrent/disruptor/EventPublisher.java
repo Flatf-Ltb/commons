@@ -16,11 +16,6 @@ public final class EventPublisher {
     private EventPublisher() {
     }
 
-    /**
-     * @param translator EventTranslatorOneArg<E, A>
-     * @param <A>        another object type
-     * @return the new EventPublisher<E, A> object
-     */
     public static <E extends ReusableEvent, A> EventPublisherArg1<E, A> newPublisher(
         @Nonnull RingBuffer<E> buffer, @Nonnull EventTranslatorOneArg<E, A> translator) {
         return newPublisher(buffer, translator, NOOP);
@@ -32,13 +27,6 @@ public final class EventPublisher {
         return new EventPublisherArg1<>(buffer, translator, beforePublish);
     }
 
-    /**
-     * @param translator EventTranslatorTwoArg<E, A0, A1>
-     * @param <A0>       another 0 object type
-     * @param <A1>       another 1 object type
-     * @return EventPublisherArg2<E, A0, A1>
-     * @throws IllegalStateException ise
-     */
     public static <E extends ReusableEvent, A0, A1> EventPublisherArg2<E, A0, A1> newPublisher(
         @Nonnull RingBuffer<E> buffer, @Nonnull EventTranslatorTwoArg<E, A0, A1> translator) {
         return newPublisher(buffer, translator, NOOP);
@@ -50,13 +38,6 @@ public final class EventPublisher {
         return new EventPublisherArg2<>(buffer, translator, beforePublish);
     }
 
-    /**
-     * @param translator EventTranslatorThreeArg<E, A0, A1, A2>
-     * @param <A0>       another 0 object type
-     * @param <A1>       another 1 object type
-     * @param <A2>       another 2 object type
-     * @return EventPublisherArg3<E, A0, A1, A2>
-     */
     public static <E extends ReusableEvent, A0, A1, A2> EventPublisherArg3<E, A0, A1, A2> newPublisher(
         @Nonnull RingBuffer<E> buffer, @Nonnull EventTranslatorThreeArg<E, A0, A1, A2> translator) {
         return newPublisher(buffer, translator, NOOP);
@@ -81,24 +62,25 @@ public final class EventPublisher {
     public static final class EventPublisherArg1<E extends ReusableEvent, A> {
 
         private final RingBuffer<E> buffer;
-
-        private final EventTranslatorOneArg<E, A> translator;
         private final Runnable beforePublish;
+        // 内置翻译器在构造期初始化一次, 复用于每次 publish, 避免捕获型 lambda 的逐次分配.
+        private final EventTranslatorOneArg<E, A> builtInTranslator;
 
         private EventPublisherArg1(@Nonnull RingBuffer<E> buffer,
                                    @Nonnull EventTranslatorOneArg<E, A> translator,
                                    @Nonnull Runnable beforePublish) {
             this.buffer = requireNonNull(buffer, "buffer");
-            this.translator = requireNonNull(translator, "translator");
             this.beforePublish = requireNonNull(beforePublish, "beforePublish");
+            requireNonNull(translator, "translator");
+            this.builtInTranslator = (event, sequence, a) -> {
+                event.clear();
+                translator.translateTo(event, sequence, a);
+            };
         }
 
         public void publish(A arg) {
             beforePublish.run();
-            buffer.publishEvent((event, sequence, value) -> {
-                event.clear();
-                translator.translateTo(event, sequence, value);
-            }, arg);
+            buffer.publishEvent(builtInTranslator, arg);
         }
 
     }
@@ -116,24 +98,25 @@ public final class EventPublisher {
     public static final class EventPublisherArg2<E extends ReusableEvent, A0, A1> {
 
         private final RingBuffer<E> buffer;
-
-        private final EventTranslatorTwoArg<E, A0, A1> translator;
         private final Runnable beforePublish;
+        // 内置翻译器在构造期初始化一次, 复用于每次 publish, 避免捕获型 lambda 的逐次分配.
+        private final EventTranslatorTwoArg<E, A0, A1> builtInTranslator;
 
         private EventPublisherArg2(@Nonnull RingBuffer<E> buffer,
                                    @Nonnull EventTranslatorTwoArg<E, A0, A1> translator,
                                    @Nonnull Runnable beforePublish) {
             this.buffer = requireNonNull(buffer, "buffer");
-            this.translator = requireNonNull(translator, "translator");
             this.beforePublish = requireNonNull(beforePublish, "beforePublish");
+            requireNonNull(translator, "translator");
+            this.builtInTranslator = (event, sequence, a0, a1) -> {
+                event.clear();
+                translator.translateTo(event, sequence, a0, a1);
+            };
         }
 
         public void publish(A0 arg0, A1 arg1) {
             beforePublish.run();
-            buffer.publishEvent((event, sequence, value0, value1) -> {
-                event.clear();
-                translator.translateTo(event, sequence, value0, value1);
-            }, arg0, arg1);
+            buffer.publishEvent(builtInTranslator, arg0, arg1);
         }
 
     }
@@ -152,24 +135,25 @@ public final class EventPublisher {
     public static final class EventPublisherArg3<E extends ReusableEvent, A0, A1, A2> {
 
         private final RingBuffer<E> buffer;
-
-        private final EventTranslatorThreeArg<E, A0, A1, A2> translator;
         private final Runnable beforePublish;
+        // 内置翻译器在构造期初始化一次, 复用于每次 publish, 避免捕获型 lambda 的逐次分配.
+        private final EventTranslatorThreeArg<E, A0, A1, A2> builtInTranslator;
 
         private EventPublisherArg3(@Nonnull RingBuffer<E> buffer,
                                    @Nonnull EventTranslatorThreeArg<E, A0, A1, A2> translator,
                                    @Nonnull Runnable beforePublish) {
             this.buffer = requireNonNull(buffer, "buffer");
-            this.translator = requireNonNull(translator, "translator");
             this.beforePublish = requireNonNull(beforePublish, "beforePublish");
+            requireNonNull(translator, "translator");
+            this.builtInTranslator = (event, sequence, a0, a1, a2) -> {
+                event.clear();
+                translator.translateTo(event, sequence, a0, a1, a2);
+            };
         }
 
         public void publish(A0 arg0, A1 arg1, A2 arg2) {
             beforePublish.run();
-            buffer.publishEvent((event, sequence, value0, value1, value2) -> {
-                event.clear();
-                translator.translateTo(event, sequence, value0, value1, value2);
-            }, arg0, arg1, arg2);
+            buffer.publishEvent(builtInTranslator, arg0, arg1, arg2);
         }
 
     }

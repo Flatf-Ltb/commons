@@ -63,7 +63,7 @@ public interface PollerListener<K, V> {
     /**
      * Constant for a no-op listener.
      */
-    PollerListener<Object, Object> NOOP = (_, _, _) -> {
+    PollerListener<Object, Object> NOOP = (queue, key, value) -> {
     };
 
     /**

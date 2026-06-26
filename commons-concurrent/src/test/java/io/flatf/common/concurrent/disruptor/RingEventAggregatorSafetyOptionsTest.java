@@ -43,7 +43,7 @@ public class RingEventAggregatorSafetyOptionsTest {
         CapturingAggregator aggregator = new CapturingAggregator(
             RingEventAggregator.<ReusableLongEvent>singleProducer()
                 .name("aggregator-single-producer")
-                .verifySingleProducer());
+                .assertSingleProducer());
 
         try {
             aggregator.publish(1L);
