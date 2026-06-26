@@ -51,19 +51,11 @@ public final class RingEventbus<E extends ReusableEvent> extends RunnableCompone
      */
     public static final String ASSERT_SINGLE_PRODUCER_PROPERTY = "flatf.disruptor.assert-single-producer-thread";
 
-    /**
-     * 旧键, 仅为向后兼容保留; 请改用 {@link #ASSERT_SINGLE_PRODUCER_PROPERTY}。
-     *
-     * @deprecated 已更名为 {@link #ASSERT_SINGLE_PRODUCER_PROPERTY}
-     */
-    @Deprecated
-    public static final String VERIFY_SINGLE_PRODUCER_PROPERTY = "flatf.disruptor.verifySingleProducer";
-
     private final Disruptor<E> disruptor;
 
     private final RingBuffer<E> buffer;
 
-    private final AtomicReference<Thread> publisherThread;
+    private final AtomicReference<Thread> publisherThreadReference;
 
     private RingEventbus(@Nullable String name, int size,
                          @Nonnull StartMode mode, boolean assertSinglePublisher,
@@ -72,7 +64,7 @@ public final class RingEventbus<E extends ReusableEvent> extends RunnableCompone
                          @Nonnull WaitStrategy strategy,
                          @Nonnull EventHandlerGraph<E> graph) {
         super(requireNonEmptyElse(name, "eventbus-[" + YYMMDD_L_HHMMSSSSS.fmt(LocalDateTime.now()) + "]"));
-        this.publisherThread = type == SINGLE && assertSinglePublisher ? new AtomicReference<>() : null;
+        this.publisherThreadReference = type == SINGLE && assertSinglePublisher ? new AtomicReference<>() : null;
         this.disruptor = new Disruptor<>(
             // EventFactory, 队列容量
             factory, adjustSize(size),
@@ -86,15 +78,15 @@ public final class RingEventbus<E extends ReusableEvent> extends RunnableCompone
     }
 
     private void assertPublisherThread() {
-        if (publisherThread == null)
+        if (publisherThreadReference == null)
             return;
         Thread current = Thread.currentThread();
-        Thread owner = publisherThread.get();
+        Thread owner = publisherThreadReference.get();
         if (owner == current)
             return;
-        if (owner == null && publisherThread.compareAndSet(null, current))
+        if (owner == null && publisherThreadReference.compareAndSet(null, current))
             return;
-        owner = publisherThread.get();
+        owner = publisherThreadReference.get();
         String ownerName = owner == null ? "unknown" : owner.getName();
         throw new IllegalStateException(
             "RingEventbus [" + name + "] is configured as singleProducer, but publish was called from multiple threads."
@@ -268,9 +260,7 @@ public final class RingEventbus<E extends ReusableEvent> extends RunnableCompone
         protected int size = 256;
         protected StartMode startMode = StartMode.auto();
         protected WaitStrategy strategy = YIELDING.getInstance();
-        @SuppressWarnings("deprecation")
-        protected boolean assertSingleProducer = Boolean.getBoolean(ASSERT_SINGLE_PRODUCER_PROPERTY)
-            || Boolean.getBoolean(VERIFY_SINGLE_PRODUCER_PROPERTY);
+        protected boolean assertSingleProducer = Boolean.getBoolean(ASSERT_SINGLE_PRODUCER_PROPERTY);
         protected EventExceptionCallback exceptionCallback;
 
         private Builder(ProducerType type, EventFactory<E> factory) {
@@ -309,18 +299,6 @@ public final class RingEventbus<E extends ReusableEvent> extends RunnableCompone
         public Builder<E> assertSingleProducer(boolean assertSingleProducer) {
             this.assertSingleProducer = assertSingleProducer;
             return this;
-        }
-
-        /** @deprecated 改用 {@link #assertSingleProducer()} */
-        @Deprecated
-        public Builder<E> verifySingleProducer() {
-            return assertSingleProducer(true);
-        }
-
-        /** @deprecated 改用 {@link #assertSingleProducer(boolean)} */
-        @Deprecated
-        public Builder<E> verifySingleProducer(boolean verifySingleProducer) {
-            return assertSingleProducer(verifySingleProducer);
         }
 
         public Builder<E> whenException(EventExceptionCallback exceptionCallback) {
