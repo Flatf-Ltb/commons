@@ -1,7 +1,7 @@
 package io.flatf.common.concurrent.disruptor;
 
-import io.flatf.common.concurrent.disruptor.EventExceptionCallback.EventExceptionContext;
-import io.flatf.common.concurrent.disruptor.EventExceptionCallback.EventExceptionStage;
+import io.flatf.common.concurrent.disruptor.EventExceptionHandler.EventExceptionContext;
+import io.flatf.common.concurrent.disruptor.EventExceptionHandler.EventExceptionStage;
 import org.junit.Test;
 
 import java.util.concurrent.BlockingQueue;

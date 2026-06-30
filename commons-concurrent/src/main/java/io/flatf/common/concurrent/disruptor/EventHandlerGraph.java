@@ -3,7 +3,7 @@ package io.flatf.common.concurrent.disruptor;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.ExceptionHandler;
 import com.lmax.disruptor.dsl.Disruptor;
-import io.flatf.common.concurrent.disruptor.EventExceptionCallback.EventExceptionContext;
+import io.flatf.common.concurrent.disruptor.EventExceptionHandler.EventExceptionContext;
 import io.flatf.common.log4j2.Log4j2LoggerFactory;
 import org.eclipse.collections.api.list.MutableList;
 import org.slf4j.Logger;
@@ -25,23 +25,23 @@ public final class EventHandlerGraph<E extends ReusableEvent> {
 
     private final MutableList<EventHandler<E>[]> handlersList;
 
-    private final EventExceptionCallback exceptionCallback;
+    private final EventExceptionHandler exceptionHandler;
 
     private EventHandlerGraph(@Nonnull MutableList<EventHandler<E>[]> handlersList,
-                              @Nullable EventExceptionCallback exceptionCallback) {
+                              @Nullable EventExceptionHandler exceptionHandler) {
         this.handlersList = handlersList;
-        this.exceptionCallback = exceptionCallback;
+        this.exceptionHandler = exceptionHandler;
     }
 
     /**
      * RingEventbus异常处理代理, 将异常信息通过日志记录并回调给用户定义的异常处理器
      * @param eventbusName 事件总线名称, 用于日志记录和回调上下文
-     * @param callback 用户定义的异常处理器, 可为null
+     * @param handler 用户定义的异常处理器, 可为null
      * @param <E>
      */
     private record ExceptionHandleProxy<E extends ReusableEvent>(
         String eventbusName,
-        EventExceptionCallback callback
+        EventExceptionHandler handler
     ) implements ExceptionHandler<E> {
 
         @Override
@@ -65,10 +65,10 @@ public final class EventHandlerGraph<E extends ReusableEvent> {
         }
 
         private void notifyCallback(EventExceptionContext context) {
-            if (callback == null)
+            if (handler == null)
                 return;
             try {
-                callback.onException(context);
+                handler.onException(context);
             } catch (Throwable throwable) {
                 log.error("RingEventbus exception callback failed -> eventbus==[{}], stage==[{}], message==[{}]",
                     eventbusName, context.stage(), throwable.getMessage(), throwable);
@@ -82,7 +82,7 @@ public final class EventHandlerGraph<E extends ReusableEvent> {
     }
 
     public void deploy(Disruptor<E> disruptor, String eventbusName) {
-        disruptor.setDefaultExceptionHandler(new ExceptionHandleProxy<>(eventbusName, exceptionCallback));
+        disruptor.setDefaultExceptionHandler(new ExceptionHandleProxy<>(eventbusName, exceptionHandler));
         if (handlersList.size() > 1) {
             var handlerGroup = disruptor.handleEventsWith(handlersList.getFirst());
             for (int i = 1; i < handlersList.size(); i++)
@@ -112,7 +112,7 @@ public final class EventHandlerGraph<E extends ReusableEvent> {
      */
     public static class Builder<E extends ReusableEvent> {
 
-        private EventExceptionCallback exceptionCallback;
+        private EventExceptionHandler exceptionHandler;
         private final MutableList<EventHandler<E>[]> eventHandlers = newFastList();
 
         private Builder() {
@@ -124,15 +124,15 @@ public final class EventHandlerGraph<E extends ReusableEvent> {
             return this;
         }
 
-        public Builder<E> whenException(EventExceptionCallback exceptionCallback) {
-            this.exceptionCallback = exceptionCallback;
+        public Builder<E> whenException(EventExceptionHandler exceptionHandler) {
+            this.exceptionHandler = exceptionHandler;
             return this;
         }
 
         public EventHandlerGraph<E> build() {
             if (eventHandlers.isEmpty())
                 throw new IllegalArgumentException("handler graph must contain at least one handler stage");
-            return new EventHandlerGraph<>(eventHandlers, exceptionCallback);
+            return new EventHandlerGraph<>(eventHandlers, exceptionHandler);
         }
 
     }

@@ -9,7 +9,7 @@ import static java.util.Objects.requireNonNull;
  * Callback invoked when RingEventbus processing or lifecycle handling fails.
  */
 @FunctionalInterface
-public interface EventExceptionCallback {
+public interface EventExceptionHandler {
 
     void onException(EventExceptionContext context);
 
@@ -66,15 +66,10 @@ public interface EventExceptionCallback {
 
     }
 
-
     enum EventExceptionStage {
-
         EVENT,
-
         START,
-
         SHUTDOWN
-
     }
 
 }

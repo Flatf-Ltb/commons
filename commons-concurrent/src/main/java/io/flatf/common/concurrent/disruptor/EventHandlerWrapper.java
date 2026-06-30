@@ -1,7 +1,7 @@
 package io.flatf.common.concurrent.disruptor;
 
 import com.lmax.disruptor.EventHandler;
-import io.flatf.common.concurrent.disruptor.EventExceptionCallback.EventExceptionContext;
+import io.flatf.common.concurrent.disruptor.EventExceptionHandler.EventExceptionContext;
 import io.flatf.common.functional.Processor;
 import io.flatf.common.log4j2.Log4j2LoggerFactory;
 import org.slf4j.Logger;
@@ -23,7 +23,7 @@ public final class EventHandlerWrapper<E extends ReusableEvent> implements Event
 
     private final Logger log;
     private final boolean crashOnFailure;
-    private final EventExceptionCallback exceptionHandler;
+    private final EventExceptionHandler exceptionHandler;
 
     private EventHandlerWrapper(String eventbusName, Processor<E> processor, Builder<E> builder) {
         this.eventbusName = requireNonNull(eventbusName, "eventbusName");
@@ -71,7 +71,7 @@ public final class EventHandlerWrapper<E extends ReusableEvent> implements Event
         private String eventbusName = "EventHandlerWrapper";
         private Logger logger;
         private boolean crashOnFailure = false;
-        private EventExceptionCallback exceptionHandler;
+        private EventExceptionHandler exceptionHandler;
 
         public Builder<E> eventbusName(String eventbusName) {
             this.eventbusName = eventbusName;
@@ -88,7 +88,7 @@ public final class EventHandlerWrapper<E extends ReusableEvent> implements Event
             return this;
         }
 
-        public Builder<E> whenException(EventExceptionCallback exceptionHandler) {
+        public Builder<E> whenException(EventExceptionHandler exceptionHandler) {
             this.exceptionHandler = exceptionHandler;
             this.crashOnFailure = false;
             return this;

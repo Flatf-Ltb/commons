@@ -261,7 +261,7 @@ public final class RingEventbus<E extends ReusableEvent> extends RunnableCompone
         protected StartMode startMode = StartMode.auto();
         protected WaitStrategy strategy = YIELDING.getInstance();
         protected boolean assertSingleProducer = Boolean.getBoolean(ASSERT_SINGLE_PRODUCER_PROPERTY);
-        protected EventExceptionCallback exceptionCallback;
+        protected EventExceptionHandler exceptionHandler;
 
         private Builder(ProducerType type, EventFactory<E> factory) {
             this.type = type;
@@ -301,8 +301,8 @@ public final class RingEventbus<E extends ReusableEvent> extends RunnableCompone
             return this;
         }
 
-        public Builder<E> whenException(EventExceptionCallback exceptionCallback) {
-            this.exceptionCallback = exceptionCallback;
+        public Builder<E> whenException(EventExceptionHandler exceptionHandler) {
+            this.exceptionHandler = exceptionHandler;
             return this;
         }
 
@@ -311,7 +311,7 @@ public final class RingEventbus<E extends ReusableEvent> extends RunnableCompone
             requiredLength(handlers, 1, "handlers");
             return new RingEventbus<>(name, size, startMode, assertSingleProducer, type, factory, strategy,
                 EventHandlerGraph.with(handlers)
-                    .whenException(exceptionCallback)
+                    .whenException(exceptionHandler)
                     .build());
         }
 
@@ -322,7 +322,7 @@ public final class RingEventbus<E extends ReusableEvent> extends RunnableCompone
             for (int i = 1; i < handlers.length; i++)
                 wizard.then(handlers[i]);
             return new RingEventbus<>(name, size, startMode, assertSingleProducer, type, factory, strategy,
-                wizard.whenException(exceptionCallback)
+                wizard.whenException(exceptionHandler)
                     .build());
         }
 
@@ -330,7 +330,7 @@ public final class RingEventbus<E extends ReusableEvent> extends RunnableCompone
             nonNull(handler, "handler");
             return new RingEventbus<>(name, size, startMode, assertSingleProducer, type, factory, strategy,
                 EventHandlerGraph.with(handler)
-                    .whenException(exceptionCallback)
+                    .whenException(exceptionHandler)
                     .build());
         }
 
