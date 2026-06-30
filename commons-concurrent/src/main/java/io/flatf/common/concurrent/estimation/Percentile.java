@@ -1,14 +1,16 @@
-package com.conversantmedia.util.estimation;
+package io.flatf.common.concurrent.estimation;
 
 import java.io.PrintStream;
 import java.io.Serial;
 import java.util.Arrays;
 
 /**
- * Implementation of "Simulatenous Estimation of Several Persentiles," by Kimmo
- * E. E. Raatikainen
- * <p>
- * This is very useful for profiling the performance of timing characteristics
+ * 流式分位数估计，基于 "Simultaneous Estimation of Several Percentiles" (Kimmo E. E. Raatikainen)。
+ *
+ * <p>定容、低开销地在线估计多个分位数(默认 p5/p50/.../p99)，**无需保存全部样本**，
+ * 适合对延迟等时序特征做剖析(如 tick→信号→下单的 p50/p99/p999)。
+ *
+ * <p>Adapted from Conversant Disruptor (Apache License 2.0)。
  */
 public class Percentile {
 
@@ -215,7 +217,6 @@ public class Percentile {
      * @param name - data set name
      * @param p    - percentile
      */
-
     public static void print(final PrintStream out, final String name, final Percentile p) {
         if (p.isReady()) {
             try {

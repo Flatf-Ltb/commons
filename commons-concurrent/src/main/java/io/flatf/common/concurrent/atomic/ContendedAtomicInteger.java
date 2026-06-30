@@ -1,11 +1,13 @@
-package com.conversantmedia.util.concurrent;
+package io.flatf.common.concurrent.atomic;
 
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
 /**
- * Avoid false cache line sharing
+ * 缓存行填充的原子 int，规避伪共享(false sharing)。详见 {@link ContendedAtomicLong}。
+ *
+ * <p>Adapted from Conversant Disruptor (Apache License 2.0)。
  */
-final class ContendedAtomicInteger {
+public final class ContendedAtomicInteger {
 
     private static final int CACHE_LINE_INTS = ContendedAtomicLong.CACHE_LINE / Integer.BYTES;
 
@@ -13,7 +15,6 @@ final class ContendedAtomicInteger {
 
     public ContendedAtomicInteger(final int init) {
         contendedArray = new AtomicIntegerArray(2 * CACHE_LINE_INTS);
-
         set(init);
     }
 
@@ -29,6 +30,7 @@ final class ContendedAtomicInteger {
         return contendedArray.compareAndSet(CACHE_LINE_INTS, expect, i);
     }
 
+    @Override
     public String toString() {
         return Integer.toString(get());
     }
