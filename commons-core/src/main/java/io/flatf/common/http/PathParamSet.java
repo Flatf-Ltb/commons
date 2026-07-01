@@ -1,15 +1,15 @@
 package io.flatf.common.http;
 
-import io.flatf.common.collections.MutableSets;
-
 import javax.annotation.Nonnull;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Set;
 
+import static io.flatf.common.collections.MutableSets.newUnifiedSet;
+
 public final class PathParamSet {
 
-    private final Set<PathParam> set = MutableSets.newUnifiedSet();
+    private final Set<PathParam> set = newUnifiedSet();
 
     private PathParamSet() {
     }

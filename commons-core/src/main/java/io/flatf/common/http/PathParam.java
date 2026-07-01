@@ -37,5 +37,4 @@ public class PathParam implements Comparable<PathParam> {
         return this.toString().compareTo(o.toString());
     }
 
-
 }

@@ -1,20 +1,21 @@
 package io.flatf.common.collections.queue;
 
-import io.flatf.common.collections.MutableSets;
 import org.eclipse.collections.api.set.sorted.MutableSortedSet;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Collection;
 import java.util.Optional;
 
+import static io.flatf.common.collections.MutableSets.newTreeSortedSet;
+
 @NotThreadSafe
 public class PriorityQueue<E> {
 
     // 优先集合
-    private final MutableSortedSet<E> prioritySet = MutableSets.newTreeSortedSet();
+    private final MutableSortedSet<E> prioritySet = newTreeSortedSet();
 
     // 次级集合
-    private final MutableSortedSet<E> secondarySet = MutableSets.newTreeSortedSet();
+    private final MutableSortedSet<E> secondarySet = newTreeSortedSet();
 
     /**
      * @param collection Collection<E>
@@ -60,8 +61,8 @@ public class PriorityQueue<E> {
      */
     public Optional<E> next() {
         return prioritySet.notEmpty() ? Optional.of(prioritySet.first())
-                : secondarySet.notEmpty() ? Optional.of(secondarySet.first())
-                : Optional.empty();
+            : secondarySet.notEmpty() ? Optional.of(secondarySet.first())
+              : Optional.empty();
     }
 
 }
