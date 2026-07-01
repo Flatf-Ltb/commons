@@ -1,4 +1,4 @@
-package io.flatf.common.state;
+package io.flatf.common.state.api;
 
 public interface FiniteStateMachine {
 

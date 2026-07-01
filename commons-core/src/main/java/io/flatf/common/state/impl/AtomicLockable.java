@@ -1,8 +1,10 @@
-package io.flatf.common.state;
+package io.flatf.common.state.impl;
+
+import io.flatf.common.state.api.Lockable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class LockableComponent implements Lockable {
+public abstract class AtomicLockable implements Lockable {
 
     private final AtomicBoolean locked = new AtomicBoolean(false);
 
