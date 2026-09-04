@@ -84,9 +84,16 @@ public final class EventHandlerGraph<E extends ReusableEvent> {
     public void deploy(Disruptor<E> disruptor, String eventbusName) {
         disruptor.setDefaultExceptionHandler(new ExceptionHandleProxy<>(eventbusName, exceptionHandler));
         if (handlersList.size() > 1) {
+            /*
+             * EventHandlerGroup 是不可变的: then(...) 返回代表新增处理器的新分组, 不修改调用者.
+             * 因此必须回写 handlerGroup, 否则每个阶段都挂在 stage 0 的屏障上而非前一阶段,
+             * 拓扑退化为 "stage0 -> stage1" 与 "stage0 -> stage2" 两条并行链. 两阶段时结果恰好正确,
+             * 三阶段起后续阶段会与前一阶段并发执行 —— 不抛异常, 只是读到写了一半的状态.
+             */
             var handlerGroup = disruptor.handleEventsWith(handlersList.getFirst());
             for (int i = 1; i < handlersList.size(); i++)
-                handlerGroup.then(handlersList.get(i));
+                handlerGroup = handlerGroup.then(handlersList.get(i));
+
         } else {
             // With set single event
             disruptor.handleEventsWith(handlersList.getFirst());
