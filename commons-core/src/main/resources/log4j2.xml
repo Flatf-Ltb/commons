@@ -1,15 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="${sys:log4j2.level:-ERROR}">
+    <!--
+        日志格式旧值（按约定注释保留）:
+        %d{yyyy-MM-dd HH:mm:ss.SSS} | %-5level | [%t][%C{1}.%M] >> %msg%n
+        %C/%M 是 location 信息, Log4j2 需为每条日志遍历一次调用栈, 官方给出的代价是慢 1.3~5 倍。
+        %logger{1} 取 logger 名末段, 输出与 %C{1} 一致但为静态值, 零成本; 方法名无零成本替代, 放弃。
+
+        注意: 本文件是**库**中的 log4j2.xml, 会随 commons-core.jar 出现在应用 classpath 上。
+        Log4j2 取 classpath 上找到的第一个 log4j2.xml, 因此它可能盖掉应用自己的配置, 谁生效取决于
+        classpath 顺序。这属于既有问题, 未在本次改动中处理 —— 详见待办说明。
+    -->
     <Appenders>
         <Console name="CONSOLE" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} | %-5level | [%t][%C{1}.%M] >> %msg%n"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} | %-5level | [%t][%logger{1}] >> %msg%n"/>
         </Console>
         <RollingFile name="ROLLING_FILE"
                      fileName="${sys:java.io.tmpdir}/logs/${sys:log4j2.filename:-started-at-${date:yyMMdd-HHmmss}}.log"
                      filePattern="${sys:java.io.tmpdir}/logs/${sys:log4j2.filename:-started-at-${date:yyMMdd-HHmmss}}.%d{yyMMdd}.log"
                      append="true">
             <!-- 日志输出格式 -->
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} | %-5level | [%t][%C{1}.%M] >> %msg%n"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} | %-5level | [%t][%logger{1}] >> %msg%n"/>
             <!-- 设置日志文件分割策略 -->
             <Policies>
                 <!-- 基于时间分割 -->

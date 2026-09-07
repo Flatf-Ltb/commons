@@ -16,7 +16,9 @@ import java.util.List;
  */
 public class WindowMonitor<K, R, P> implements Runnable {
 
-    private static final Logger logger = LoggerFactory.getLogger(Window.class);
+    // 旧实现（logger 声明为 Window, 复制粘贴错误；按约定注释保留）
+    // private static final Logger logger = LoggerFactory.getLogger(Window.class);
+    private static final Logger logger = LoggerFactory.getLogger(WindowMonitor.class);
 
     private final WeakReference<Window<K, R, P>> windowRef;
     private final String monitorThreadName;
