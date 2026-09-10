@@ -94,6 +94,30 @@ public final class RingEventbus<E extends ReusableEvent> extends RunnableCompone
     }
 
     /**
+     * 环形缓冲区容量（构造期确定，此后不变）。
+     *
+     * @return int 容量
+     */
+    public int bufferSize() {
+        return buffer.getBufferSize();
+    }
+
+    /**
+     * 当前剩余可写槽位数。
+     *
+     * <p>用于观测背压：{@link #publish} 在环满时会**阻塞生产者线程**且没有任何返回值或异常可供判断，
+     * 因此生产侧饱和是不可见的。对 CTP 网关这类由外部原生回调线程驱动的生产者，阻塞会直接堆积回调、
+     * 甚至导致前置断连，所以需要一个可采样的容量指标。
+     *
+     * <p>这是一个瞬时快照，多生产者下读到即过期，只适合做告警阈值判断，不要用于流程控制。
+     *
+     * @return long 剩余容量
+     */
+    public long remainingCapacity() {
+        return buffer.remainingCapacity();
+    }
+
+    /**
      * 调整队列容量, 最小16, 最大65536, 其他输入参数自动调整为最接近的2次幂
      *
      * @param size buffer size
